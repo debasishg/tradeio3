@@ -1,2 +1,13 @@
 *.class
 *.log
+.metals/readonly/scala/Predef.scala
+.bloop
+.metals
+project/.bloop
+target/
+core/target/
+project/metals.sbt
+project/project/metals.sbt
+project/project/project/metals.sbt
+tradeio3.code-workspace
+.bsp/
