@@ -7,6 +7,18 @@ import java.util.UUID
 import cats.{ Eq, Order, Show }
 import monocle.Iso
 
+// type Timestamp = Timestamp.Type
+// object Timestamp extends Newtype[Instant]
+//
+// type Quantity = Quantity.Type
+// object Quantity extends Newtype[Int]
+//
+// type Source = String
+// object Source extends Newtype[String]
+//
+// type SocketId = SocketId.Type
+// object SocketId extends IdNewtype
+
 abstract class Newtype[A](using
     eqv: Eq[A],
     ord: Order[A],

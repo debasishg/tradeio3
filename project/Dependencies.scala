@@ -21,6 +21,7 @@ object Dependencies {
   }
   val squants = "org.typelevel" %% "squants"  % squantsVersion
   val monocleCore = "dev.optics"      %% "monocle-core" % monocleVersion
+  val shapeless = "org.typelevel" %% "shapeless3-deriving" % shapelessVersion
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
@@ -28,7 +29,7 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(squants) ++
+    commonDependencies ++ Seq(squants, shapeless) ++
       Seq(Refined.refinedCore) ++
         Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined) ++ Seq(monocleCore)
 

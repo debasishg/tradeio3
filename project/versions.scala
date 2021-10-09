@@ -8,4 +8,5 @@ object Versions {
   val refinedVersion = "0.9.27"
   val circeVersion = "0.14.1"
   val monocleVersion = "3.1.0"
+  val shapelessVersion = "3.0.1"
 }
