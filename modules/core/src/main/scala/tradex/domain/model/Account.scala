@@ -11,13 +11,26 @@ import utils.Newtype
 // top level definition
 def today = LocalDateTime.now
 
+def foo(xs: List[Int]) =
+  xs.map(x =>
+    val y = x - 1
+    y * y
+  )
+
 object account:
   enum AccountType(val entryName: String):
     case Trading extends AccountType("Trading")
     case Settlement extends AccountType("Settlement")
     case Both extends AccountType("Both")
 
-  final case class Account private (
+  object AccountType:
+    def apply(s: String): Option[AccountType] =
+      if (s == "Trading") Some(Trading)
+      else if (s == "Settlement") Some(Settlement)
+      else if (s == "Both") Some(Both)
+      else None
+
+  final case class Account(
       no: AccountNo.Type,
       name: AccountName.Type,
       dateOfOpen: LocalDateTime,

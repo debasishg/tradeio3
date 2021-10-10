@@ -10,18 +10,18 @@ object Dependencies {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
     val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   }
-  object Refined {
-    val refinedCore      = "eu.timepit" %% "refined"           % refinedVersion
-  }
   object Circe {
     val circeCore    = circe("core")
     val circeGeneric = circe("generic")
     val circeParser  = circe("parser")
     val circeRefined = circe("refined")
   }
+  object Skunk {
+    val skunkCore  = "org.tpolecat" %% "skunk-core"  % skunkVersion
+    val skunkCirce = "org.tpolecat" %% "skunk-circe" % skunkVersion
+  }
   val squants = "org.typelevel" %% "squants"  % squantsVersion
   val monocleCore = "dev.optics"      %% "monocle-core" % monocleVersion
-  val shapeless = "org.typelevel" %% "shapeless3-deriving" % shapelessVersion
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
@@ -29,9 +29,7 @@ object Dependencies {
   val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
 
   val tradeioDependencies: Seq[ModuleID] = 
-    commonDependencies ++ Seq(squants, shapeless) ++
-      Seq(Refined.refinedCore) ++
-        Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined) ++ Seq(monocleCore)
-
-
+    commonDependencies ++ Seq(squants) ++
+      Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined) ++ Seq(monocleCore) ++
+      Seq(Skunk.skunkCore, Skunk.skunkCirce)
 }
