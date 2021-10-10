@@ -2,6 +2,7 @@ package tradex.domain
 package repository
 
 import java.time.LocalDate
+import cats.syntax.all._
 import cats.effect.*
 import skunk.*
 import skunk.codec.all.*
@@ -13,7 +14,7 @@ import codecs.{ given, * }
 trait AccountRepository[F[_]]:
 
   /** query by account number */
-  def query(no: AccountNo): F[Option[Account]]
+  def query(no: AccountNo.Type): F[Option[Account]]
 
   /** store */
   def store(a: Account, upsert: Boolean = true): F[Account]
@@ -33,7 +34,54 @@ trait AccountRepository[F[_]]:
 object AccountRepository:
   def make[F[_]](
       postgres: Resource[F, Session[F]]
-  )(using Concurrent[F]): AccountRepository[F] = ???
+  )(using Concurrent[F]): AccountRepository[F] =
+    new AccountRepository[F]:
+      import AccountRepositorySQL._
+
+      def query(no: AccountNo.Type): F[Option[Account]] =
+        postgres.use { session =>
+          session.prepare(selectByAccountNo).use { ps =>
+            ps.option(no)
+          }
+        }
+
+      def store(a: Account, upsert: Boolean = true): F[Account] =
+        postgres.use { session =>
+          session
+            .prepare((if (upsert) upsertAccount else insertAccount))
+            .use { cmd =>
+              cmd.execute(a).void.map(_ => a)
+            }
+        }
+
+      def query(openedOn: LocalDate): F[List[Account]] =
+        postgres.use { session =>
+          session.prepare(selectByOpenedDate).use { ps =>
+            ps.stream(openedOn, 1024).compile.toList
+          }
+        }
+
+      def all: F[List[Account]] = postgres.use(_.execute(selectAll))
+
+      def allClosed(closeDate: Option[LocalDate]): F[List[Account]] =
+        postgres.use { session =>
+          closeDate
+            .map { cd =>
+              session.prepare(selectClosedAfter).use { ps =>
+                ps.stream(cd, 1024).compile.toList
+              }
+            }
+            .getOrElse {
+              session.execute(selectAllClosed)
+            }
+        }
+
+      def allAccountsOfType(accountType: AccountType): F[List[Account]] =
+        postgres.use { session =>
+          session.prepare(selectByAccountType).use { ps =>
+            ps.stream(accountType, 1024).compile.toList
+          }
+        }
 
 private object AccountRepositorySQL:
   // A codec that maps Postgres type `accountType` to Scala type `AccountType`
