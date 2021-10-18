@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.0.2"
+ThisBuild / scalaVersion := "3.1.0"
 ThisBuild / version := "0.0.1"
 ThisBuild / organization := "dev.tradex"
 ThisBuild / organizationName := "tradex"
@@ -22,7 +22,7 @@ lazy val core = (project in file("modules/core")).settings(
 
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
-  scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info"),
+  scalacOptions ++= List("-Wconf:cat=unused:info"),
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
 

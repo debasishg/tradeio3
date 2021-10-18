@@ -7,17 +7,23 @@ import cats.data.ValidatedNec
 import cats.syntax.all.*
 
 import utils.Newtype
+import scala.annotation.experimental
 
 // top level definition
 def today = LocalDateTime.now
 
-def foo(xs: List[Int]) =
-  xs.map(x =>
-    val y = x - 1
-    y * y
-  )
-
+@experimental
 object account:
+  import language.experimental.fewerBraces
+
+  // with scala 3.1.0, the above import works
+  // but significant indentation doesn't work
+  def foo(xs: List[Int]) =
+    xs.map(x =>
+      val y = x - 1
+      y * y
+    )
+
   enum AccountType(val entryName: String):
     case Trading extends AccountType("Trading")
     case Settlement extends AccountType("Settlement")
