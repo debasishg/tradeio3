@@ -7,14 +7,11 @@ import cats.data.ValidatedNec
 import cats.syntax.all.*
 
 import utils.Newtype
-import scala.annotation.experimental
 
 // top level definition
 def today = LocalDateTime.now
 
-@experimental
 object account:
-  import language.experimental.fewerBraces
 
   // with scala 3.1.0, the above import works
   // but significant indentation doesn't work

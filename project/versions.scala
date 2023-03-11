@@ -8,4 +8,6 @@ object Versions {
   val circeVersion = "0.14.1"
   val monocleVersion = "3.1.0"
   val skunkVersion = "0.2.2"
+  val zioVersion = "2.0.10"
+  val zioPreludeVersion = "1.0.0-RC18"
 }

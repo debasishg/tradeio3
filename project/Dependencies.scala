@@ -6,6 +6,11 @@ object Dependencies {
   def circe(artifact: String): ModuleID     = "io.circe"          %% s"circe-$artifact"     % circeVersion
 
 
+  object Zio {
+    val zio               = "dev.zio" %% "zio"                 % zioVersion
+    val zioStreams        = "dev.zio" %% "zio-streams"         % zioVersion
+    val zioPrelude        = "dev.zio" %% "zio-prelude"         % zioPreludeVersion
+  }
   object Cats {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
     val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
@@ -26,7 +31,7 @@ object Dependencies {
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect)
+  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude)
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(squants) ++
