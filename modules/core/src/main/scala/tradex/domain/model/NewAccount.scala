@@ -3,10 +3,10 @@ package model
 
 import java.time.LocalDateTime
 import squants.market.*
-import utils.Newtype
 import zio.prelude.Validation
+import utils.Newtype
 
-object NewAccount {
+object newAccount {
   final case class AccountBase(
       no: AccountNo.Type,
       name: AccountName.Type,
@@ -24,13 +24,45 @@ object NewAccount {
     def settlementCurrency: Currency
 
   trait Account[C <: AccountType]:
-    def base: AccountBase
-    def accountType: C
+    private[newAccount] def base: AccountBase
+    private[newAccount] def accountType: C
 
-  final case class TradingAccount private (base: AccountBase, accountType: Trading)       extends Account[Trading]
-  final case class SettlementAccount private (base: AccountBase, accountType: Settlement) extends Account[Settlement]
+  final case class TradingAccount private (
+      private[newAccount] base: AccountBase,
+      private[newAccount] accountType: Trading
+  ) extends Account[Trading] {
+    val no              = base.no
+    val name            = base.name
+    val dateOfOpen      = base.dateOfOpen
+    val dateOfClose     = base.dateOfClose
+    val baseCurrency    = base.baseCurrency
+    val tradingCurrency = accountType.tradingCurrency
+  }
+
+  final case class SettlementAccount private (
+      private[newAccount] base: AccountBase,
+      private[newAccount] accountType: Settlement
+  ) extends Account[Settlement] {
+    val no                 = base.no
+    val name               = base.name
+    val dateOfOpen         = base.dateOfOpen
+    val dateOfClose        = base.dateOfClose
+    val baseCurrency       = base.baseCurrency
+    val settlementCurrency = accountType.settlementCurrency
+  }
+
   final case class TradingAndSettlementAccount private (base: AccountBase, accountType: Trading & Settlement)
-      extends Account[Trading & Settlement]
+      extends Account[Trading & Settlement] {
+    val no                 = base.no
+    val name               = base.name
+    val dateOfOpen         = base.dateOfOpen
+    val dateOfClose        = base.dateOfClose
+    val baseCurrency       = base.baseCurrency
+    val tradingCurrency    = accountType.tradingCurrency
+    val settlementCurrency = accountType.settlementCurrency
+  }
+
+  type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
   // newtypes for AccountNo
   type AccountNo = String
@@ -150,4 +182,16 @@ object NewAccount {
       .validateWith(validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate)) { (acc, _) =>
         acc.copy(dateOfClose = Some(closeDate))
       }
+}
+
+object Main {
+  import newAccount._
+  val ta = TradingAccount.tradingAccount(
+    no = AccountNo("a-123456"),
+    name = AccountName("debasish ghosh"),
+    baseCurrency = USD,
+    tradingCcy = USD,
+    dateOfOpen = None,
+    dateOfClose = None
+  )
 }
