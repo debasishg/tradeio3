@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import squants.market.*
 import zio.prelude.Validation
 import utils.Newtype
+import zio.prelude.ZValidation
 
 object newAccount {
   final case class AccountBase(
@@ -25,41 +26,40 @@ object newAccount {
 
   trait Account[C <: AccountType]:
     private[newAccount] def base: AccountBase
-    private[newAccount] def accountType: C
+    def accountType: C
+    def closeAccount(closeDate: LocalDateTime): Validation[String, Account[C]]
+    val no           = base.no
+    val name         = base.name
+    val dateOfOpen   = base.dateOfOpen
+    val dateOfClose  = base.dateOfClose
+    val baseCurrency = base.baseCurrency
 
   final case class TradingAccount private (
       private[newAccount] base: AccountBase,
-      private[newAccount] accountType: Trading
+      accountType: Trading
   ) extends Account[Trading] {
-    val no              = base.no
-    val name            = base.name
-    val dateOfOpen      = base.dateOfOpen
-    val dateOfClose     = base.dateOfClose
-    val baseCurrency    = base.baseCurrency
     val tradingCurrency = accountType.tradingCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAccount] =
+      close(base, closeDate).map(TradingAccount(_, accountType))
   }
 
   final case class SettlementAccount private (
       private[newAccount] base: AccountBase,
-      private[newAccount] accountType: Settlement
+      accountType: Settlement
   ) extends Account[Settlement] {
-    val no                 = base.no
-    val name               = base.name
-    val dateOfOpen         = base.dateOfOpen
-    val dateOfClose        = base.dateOfClose
-    val baseCurrency       = base.baseCurrency
     val settlementCurrency = accountType.settlementCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, SettlementAccount] =
+      close(base, closeDate).map(SettlementAccount(_, accountType))
   }
 
-  final case class TradingAndSettlementAccount private (base: AccountBase, accountType: Trading & Settlement)
-      extends Account[Trading & Settlement] {
-    val no                 = base.no
-    val name               = base.name
-    val dateOfOpen         = base.dateOfOpen
-    val dateOfClose        = base.dateOfClose
-    val baseCurrency       = base.baseCurrency
+  final case class TradingAndSettlementAccount private (
+      private[newAccount] base: AccountBase,
+      accountType: Trading & Settlement
+  ) extends Account[Trading & Settlement] {
     val tradingCurrency    = accountType.tradingCurrency
     val settlementCurrency = accountType.settlementCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAndSettlementAccount] =
+      close(base, closeDate).map(TradingAndSettlementAccount(_, accountType))
   }
 
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
@@ -174,7 +174,7 @@ object newAccount {
       Validation.fail(s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]")
     else Validation.succeed(cd)
 
-  def close(
+  private def close(
       a: AccountBase,
       closeDate: LocalDateTime
   ): Validation[String, AccountBase] =
@@ -186,12 +186,14 @@ object newAccount {
 
 object Main {
   import newAccount._
-  val ta = TradingAccount.tradingAccount(
-    no = AccountNo("a-123456"),
-    name = AccountName("debasish ghosh"),
-    baseCurrency = USD,
-    tradingCcy = USD,
-    dateOfOpen = None,
-    dateOfClose = None
-  )
+  val ta = TradingAccount
+    .tradingAccount(
+      no = AccountNo("a-123456"),
+      name = AccountName("debasish ghosh"),
+      baseCurrency = USD,
+      tradingCcy = USD,
+      dateOfOpen = None,
+      dateOfClose = None
+    )
+    .fold(errs => throw new Exception(errs.mkString), identity)
 }
