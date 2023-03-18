@@ -43,10 +43,10 @@ object instrument {
     case FixedIncome extends InstrumentType(NonEmptyString("fixed income"))
 
   object InstrumentType:
-    given instrumentTypeEncoder: Encoder[InstrumentType] =
+    given Encoder[InstrumentType] =
       Encoder[String].contramap(_.entryName)
 
-    given instrumentTypeDecoder: Decoder[InstrumentType] =
+    given Decoder[InstrumentType] =
       Decoder[String].map(InstrumentType.valueOf(_))
 
   object UnitPriceType extends Subtype[BigDecimal]:
@@ -59,6 +59,17 @@ object instrument {
   case class UnitPrice(value: UnitPriceType)
   given Decoder[UnitPrice] = deriveDecoder[UnitPrice]
   given Encoder[UnitPrice] = deriveEncoder[UnitPrice]
+
+  enum CouponFrequency(val entryName: NonEmptyString):
+    case Annual extends CouponFrequency(NonEmptyString("annual"))
+    case SemiAnnual extends CouponFrequency(NonEmptyString("semi-annual"))
+
+  object CouponFrequency:
+    given Encoder[CouponFrequency] =
+      Encoder[String].contramap(_.entryName)
+
+    given Decoder[CouponFrequency] =
+      Decoder[String].map(CouponFrequency.valueOf(_))
 
   final case class InstrumentBase(
       isinCode: ISINCode,
@@ -78,6 +89,12 @@ object instrument {
   ) extends Instrument:
     val instrumentType = InstrumentType.CCY
 
+  object Ccy:
+    def ccy(isin: ISINCode, name: InstrumentName) =
+      Ccy(
+        base = InstrumentBase(isin, name, LotSize(LotSizeType(1)))
+      )
+
   final case class Equity(
       private[instrument] base: InstrumentBase,
       dateOfIssue: Instant,
@@ -85,12 +102,51 @@ object instrument {
   ) extends Instrument:
     val instrumentType = InstrumentType.Equity
 
+  object Equity:
+    def equity(isin: ISINCode, name: InstrumentName, lotSize: LotSize, issueDate: Instant, unitPrice: UnitPrice) =
+      Equity(
+        base = InstrumentBase(isin, name, lotSize),
+        dateOfIssue = issueDate,
+        unitPrice = unitPrice
+      )
+
   final case class FixedIncome(
       private[instrument] base: InstrumentBase,
       dateOfIssue: Instant,
       dateOfMaturity: Option[Instant],
-      couponRate: Option[Money],
-      couponFrequency: Option[BigDecimal]
+      couponRate: Money,
+      couponFrequency: CouponFrequency
   ) extends Instrument:
     val instrumentType = InstrumentType.FixedIncome
+
+  object FixedIncome:
+    def fixedIncome(
+        isin: ISINCode,
+        name: InstrumentName,
+        lotSize: LotSize,
+        issueDate: Instant,
+        maturityDate: Option[Instant],
+        couponRate: Money,
+        couponFrequency: CouponFrequency
+    ): Validation[String, FixedIncome] =
+      validateIssueAndMaturityDate(issueDate, maturityDate).map { (id, md) =>
+        FixedIncome(
+          base = InstrumentBase(isin, name, lotSize),
+          dateOfIssue = id,
+          dateOfMaturity = md,
+          couponRate = couponRate,
+          couponFrequency = couponFrequency
+        )
+      }
+
+    private def validateIssueAndMaturityDate(
+        id: Instant,
+        md: Option[Instant]
+    ): Validation[String, (Instant, Option[Instant])] =
+      md.map { c =>
+        if (c isBefore id)
+          Validation.fail(s"Maturity date [$c] cannot be earlier than issue date [$id]")
+        else Validation.succeed((id, md))
+      }.getOrElse(Validation.succeed((id, md)))
+
 }

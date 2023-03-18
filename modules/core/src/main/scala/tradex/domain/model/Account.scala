@@ -3,8 +3,7 @@ package model
 
 import java.time.LocalDateTime
 import squants.market.*
-import zio.prelude.Validation
-import zio.prelude.Newtype
+import zio.prelude.{ Newtype, Validation }
 
 def today = LocalDateTime.now()
 
