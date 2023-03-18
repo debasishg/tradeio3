@@ -4,8 +4,8 @@ package model
 import java.time.LocalDateTime
 import squants.market.*
 import zio.prelude.Validation
-import utils.Newtype
 import zio.prelude.ZValidation
+import zio.prelude.Newtype
 
 def today = LocalDateTime.now()
 
@@ -67,20 +67,20 @@ object account {
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
   // newtypes for AccountNo
-  type AccountNo = String
   object AccountNo extends Newtype[String]
-  extension (ano: AccountNo.Type)
-    def validateNo: Validation[String, AccountNo.Type] =
-      if (ano.value.size > 12 || ano.value.size < 5)
+  type AccountNo = AccountNo.Type
+  extension (ano: AccountNo)
+    def validateNo: Validation[String, AccountNo] =
+      if (AccountNo.unwrap(ano).size > 12 || AccountNo.unwrap(ano).size < 5)
         Validation.fail(s"AccountNo cannot be more than 12 characters or less than 5 characters long")
       else Validation.succeed(ano)
 
   // newtypes for AccountName
-  type AccountName = String
   object AccountName extends Newtype[String]
-  extension (aname: AccountName.Type)
-    def validateName: Validation[String, AccountName.Type] =
-      if (aname.value.isEmpty || aname.value.isBlank)
+  type AccountName = AccountName.Type
+  extension (aname: AccountName)
+    def validateName: Validation[String, AccountName] =
+      if (AccountName.unwrap(aname).isEmpty || AccountName.unwrap(aname).isBlank)
         Validation.fail(s"Account Name cannot be empty")
       else Validation.succeed(aname)
 

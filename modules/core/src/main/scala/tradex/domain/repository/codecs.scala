@@ -10,15 +10,15 @@ import model.account._
 object codecs:
   given MoneyContext = defaultMoneyContext
 
-  val accountNo: Codec[AccountNo.Type] =
-    varchar.eimap[AccountNo.Type] { s =>
+  val accountNo: Codec[AccountNo] =
+    varchar.eimap[AccountNo] { s =>
       AccountNo(s).validateNo.toEitherAssociative.leftMap(identity)
-    }(_.value)
+    }(AccountNo.unwrap(_))
 
-  val accountName: Codec[AccountName.Type] =
-    varchar.eimap[AccountName.Type] { s =>
+  val accountName: Codec[AccountName] =
+    varchar.eimap[AccountName] { s =>
       AccountName(s).validateName.toEitherAssociative.leftMap(identity)
-    }(_.value)
+    }(AccountName.unwrap(_))
 
   val money: Codec[Money] = numeric.imap[Money](USD(_))(_.amount)
 

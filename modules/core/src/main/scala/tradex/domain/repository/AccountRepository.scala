@@ -14,7 +14,7 @@ import codecs.{ given, * }
 trait AccountRepository[F[_]]:
 
   /** query by account number */
-  def query(no: AccountNo.Type): F[Option[ClientAccount]]
+  def query(no: AccountNo): F[Option[ClientAccount]]
 
   /** store */
   def store(a: ClientAccount, upsert: Boolean = true): F[ClientAccount]
@@ -128,7 +128,7 @@ private object NewAccountRepositorySQL:
             .fold(errs => throw new Exception(errs.mkString), identity)
       }
 
-  val selectByAccountNo: Query[AccountNo.Type, ClientAccount] =
+  val selectByAccountNo: Query[AccountNo, ClientAccount] =
     sql"""
         SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
