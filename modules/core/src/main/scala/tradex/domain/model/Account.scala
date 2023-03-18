@@ -4,15 +4,14 @@ package model
 import java.time.LocalDateTime
 import squants.market.*
 import zio.prelude.Validation
-import zio.prelude.ZValidation
 import zio.prelude.Newtype
 
 def today = LocalDateTime.now()
 
-object account {
+object account:
   final case class AccountBase(
-      no: AccountNo.Type,
-      name: AccountName.Type,
+      no: AccountNo,
+      name: AccountName,
       dateOfOpen: LocalDateTime,
       dateOfClose: Option[LocalDateTime],
       baseCurrency: Currency
@@ -39,34 +38,30 @@ object account {
   final case class TradingAccount private (
       private[account] base: AccountBase,
       accountType: Trading
-  ) extends Account[Trading] {
+  ) extends Account[Trading]:
     val tradingCurrency = accountType.tradingCurrency
     def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAccount] =
       close(base, closeDate).map(TradingAccount(_, accountType))
-  }
 
   final case class SettlementAccount private (
       private[account] base: AccountBase,
       accountType: Settlement
-  ) extends Account[Settlement] {
+  ) extends Account[Settlement]:
     val settlementCurrency = accountType.settlementCurrency
     def closeAccount(closeDate: LocalDateTime): Validation[String, SettlementAccount] =
       close(base, closeDate).map(SettlementAccount(_, accountType))
-  }
 
   final case class TradingAndSettlementAccount private (
       private[account] base: AccountBase,
       accountType: Trading & Settlement
-  ) extends Account[Trading & Settlement] {
+  ) extends Account[Trading & Settlement]:
     val tradingCurrency    = accountType.tradingCurrency
     val settlementCurrency = accountType.settlementCurrency
     def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAndSettlementAccount] =
       close(base, closeDate).map(TradingAndSettlementAccount(_, accountType))
-  }
 
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
-  // newtypes for AccountNo
   object AccountNo extends Newtype[String]
   type AccountNo = AccountNo.Type
   extension (ano: AccountNo)
@@ -75,7 +70,6 @@ object account {
         Validation.fail(s"AccountNo cannot be more than 12 characters or less than 5 characters long")
       else Validation.succeed(ano)
 
-  // newtypes for AccountName
   object AccountName extends Newtype[String]
   type AccountName = AccountName.Type
   extension (aname: AccountName)
@@ -86,8 +80,8 @@ object account {
 
   object TradingAccount:
     def tradingAccount(
-        no: AccountNo.Type,
-        name: AccountName.Type,
+        no: AccountNo,
+        name: AccountName,
         dateOfOpen: Option[LocalDateTime],
         dateOfClose: Option[LocalDateTime],
         baseCurrency: Currency,
@@ -107,8 +101,8 @@ object account {
 
   object SettlementAccount:
     def settlementAccount(
-        no: AccountNo.Type,
-        name: AccountName.Type,
+        no: AccountNo,
+        name: AccountName,
         dateOfOpen: Option[LocalDateTime],
         dateOfClose: Option[LocalDateTime],
         baseCurrency: Currency,
@@ -129,8 +123,8 @@ object account {
   object TradingAndSettlementAccount:
     private abstract class Both() extends Trading, Settlement
     def tradingAndSettlementAccount(
-        no: AccountNo.Type,
-        name: AccountName.Type,
+        no: AccountNo,
+        name: AccountName,
         dateOfOpen: Option[LocalDateTime],
         dateOfClose: Option[LocalDateTime],
         baseCurrency: Currency,
@@ -162,11 +156,10 @@ object account {
 
   private def validateAccountAlreadyClosed(
       a: AccountBase
-  ): Validation[String, AccountBase] = {
+  ): Validation[String, AccountBase] =
     if (a.dateOfClose.isDefined)
       Validation.fail(s"Account ${a.no} is already closed")
     else Validation.succeed(a)
-  }
 
   private def validateCloseDate(
       a: AccountBase,
@@ -184,9 +177,8 @@ object account {
       .validateWith(validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate)) { (acc, _) =>
         acc.copy(dateOfClose = Some(closeDate))
       }
-}
 
-object Main {
+object Main:
   import account._
   val ta = TradingAccount
     .tradingAccount(
@@ -198,4 +190,3 @@ object Main {
       dateOfClose = None
     )
     .fold(errs => throw new Exception(errs.mkString), identity)
-}

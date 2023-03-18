@@ -10,4 +10,5 @@ object Versions {
   val skunkVersion = "0.2.2"
   val zioVersion = "2.0.10"
   val zioPreludeVersion = "1.0.0-RC18"
+  val zioInteropCatsVersion = "13.0.0.2"
 }

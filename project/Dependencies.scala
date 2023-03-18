@@ -10,6 +10,7 @@ object Dependencies {
     val zio               = "dev.zio" %% "zio"                 % zioVersion
     val zioStreams        = "dev.zio" %% "zio-streams"         % zioVersion
     val zioPrelude        = "dev.zio" %% "zio-prelude"         % zioPreludeVersion
+    val zioInteropCats    = "dev.zio" %% "zio-interop-cats"    % zioInteropCatsVersion
   }
   object Cats {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -31,7 +32,7 @@ object Dependencies {
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude)
+  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude, Zio.zioInteropCats)
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(squants) ++
