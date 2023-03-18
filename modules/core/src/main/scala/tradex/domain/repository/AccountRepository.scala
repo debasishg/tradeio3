@@ -14,38 +14,35 @@ import codecs.{ given, * }
 trait AccountRepository[F[_]]:
 
   /** query by account number */
-  def query(no: AccountNo.Type): F[Option[Account]]
+  def query(no: AccountNo.Type): F[Option[ClientAccount]]
 
   /** store */
-  def store(a: Account, upsert: Boolean = true): F[Account]
+  def store(a: ClientAccount, upsert: Boolean = true): F[ClientAccount]
 
   /** query by opened date */
-  def query(openedOn: LocalDate): F[List[Account]]
+  def query(openedOn: LocalDate): F[List[ClientAccount]]
 
   /** all accounts */
-  def all: F[List[Account]]
+  def all: F[List[ClientAccount]]
 
   /** all closed accounts, if date supplied then all closed after that date */
-  def allClosed(closeDate: Option[LocalDate]): F[List[Account]]
+  def allClosed(closeDate: Option[LocalDate]): F[List[ClientAccount]]
 
-  /** all accounts trading / settlement / both */
-  def allAccountsOfType(accountType: AccountType): F[List[Account]]
-
-object AccountRepository:
+object NewAccountRepository:
   def make[F[_]](
       postgres: Resource[F, Session[F]]
   )(using Concurrent[F]): AccountRepository[F] =
     new AccountRepository[F]:
-      import AccountRepositorySQL._
+      import NewAccountRepositorySQL._
 
-      def query(no: AccountNo.Type): F[Option[Account]] =
+      def query(no: AccountNo.Type): F[Option[ClientAccount]] =
         postgres.use { session =>
           session.prepare(selectByAccountNo).use { ps =>
             ps.option(no)
           }
         }
 
-      def store(a: Account, upsert: Boolean = true): F[Account] =
+      def store(a: ClientAccount, upsert: Boolean = true): F[ClientAccount] =
         postgres.use { session =>
           session
             .prepare((if (upsert) upsertAccount else insertAccount))
@@ -54,16 +51,16 @@ object AccountRepository:
             }
         }
 
-      def query(openedOn: LocalDate): F[List[Account]] =
+      def query(openedOn: LocalDate): F[List[ClientAccount]] =
         postgres.use { session =>
           session.prepare(selectByOpenedDate).use { ps =>
             ps.stream(openedOn, 1024).compile.toList
           }
         }
 
-      def all: F[List[Account]] = postgres.use(_.execute(selectAll))
+      def all: F[List[ClientAccount]] = postgres.use(_.execute(selectAll))
 
-      def allClosed(closeDate: Option[LocalDate]): F[List[Account]] =
+      def allClosed(closeDate: Option[LocalDate]): F[List[ClientAccount]] =
         postgres.use { session =>
           closeDate
             .map { cd =>
@@ -76,146 +73,107 @@ object AccountRepository:
             }
         }
 
-      def allAccountsOfType(accountType: AccountType): F[List[Account]] =
-        postgres.use { session =>
-          session.prepare(selectByAccountType).use { ps =>
-            ps.stream(accountType, 1024).compile.toList
-          }
-        }
+private object NewAccountRepositorySQL:
 
-private object AccountRepositorySQL:
-  // A codec that maps Postgres type `accountType` to Scala type `AccountType`
-  // val accountType = `enum`(AccountType, Type("accounttype"))
-
-  val accountEncoder: Encoder[Account] =
+  val accountEncoder: Encoder[ClientAccount] =
     (
-      accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt
+      accountNo ~ accountName ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt
     ).values.contramap {
-      case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-        no ~ nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc
+      case TradingAccount(AccountBase(no, nm, dop, doc, bc), tc) =>
+        no ~ nm ~ dop ~ doc ~ bc ~ Some(tc.tradingCurrency) ~ None
 
-      case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-        no ~ nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None
+      case SettlementAccount(AccountBase(no, nm, dop, doc, bc), sc) =>
+        no ~ nm ~ dop ~ doc ~ bc ~ None ~ Some(sc.settlementCurrency)
 
-      case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-        no ~ nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc
+      case TradingAndSettlementAccount(AccountBase(no, nm, dop, doc, bc), tsc) =>
+        no ~ nm ~ dop ~ doc ~ bc ~ Some(tsc.tradingCurrency) ~ Some(tsc.settlementCurrency)
     }
 
-  val accountDecoder: Decoder[Account] =
-    (accountNo ~ accountName ~ accountType ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt)
-      .map { case no ~ nm ~ tp ~ dp ~ dc ~ bc ~ tc ~ sc =>
-        tp match
-          case AccountType.Trading =>
-            Account(
+  val accountDecoder: Decoder[ClientAccount] =
+    (accountNo ~ accountName ~ timestamp ~ timestamp.opt ~ currency ~ currency.opt ~ currency.opt)
+      .map {
+        case no ~ nm ~ dp ~ dc ~ bc ~ tc ~ None =>
+          TradingAccount
+            .tradingAccount(
               no,
               nm,
-              dp,
+              Some(dp),
               dc,
-              AccountType.Trading,
               bc,
-              tc,
-              None
+              tc.get
             )
-          case AccountType.Settlement =>
-            Account(
+            .fold(errs => throw new Exception(errs.mkString), identity)
+        case no ~ nm ~ dp ~ dc ~ bc ~ None ~ sc =>
+          SettlementAccount
+            .settlementAccount(
               no,
               nm,
-              dp,
+              Some(dp),
               dc,
-              AccountType.Settlement,
               bc,
-              None,
-              sc
+              sc.get
             )
-          case AccountType.Both =>
-            Account(
+            .fold(errs => throw new Exception(errs.mkString), identity)
+        case no ~ nm ~ dp ~ dc ~ bc ~ tc ~ sc =>
+          TradingAndSettlementAccount
+            .tradingAndSettlementAccount(
               no,
               nm,
-              dp,
+              Some(dp),
               dc,
-              AccountType.Both,
               bc,
-              tc,
-              sc
+              tc.get,
+              sc.get
             )
+            .fold(errs => throw new Exception(errs.mkString), identity)
       }
 
-  val selectByAccountNo: Query[AccountNo.Type, Account] =
+  val selectByAccountNo: Query[AccountNo.Type, ClientAccount] =
     sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.no = $accountNo
        """.query(accountDecoder)
 
-  val selectByOpenedDate: Query[LocalDate, Account] =
+  val selectByOpenedDate: Query[LocalDate, ClientAccount] =
     sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE DATE(a.dateOfOpen) = $date
        """.query(accountDecoder)
 
-  val selectByAccountType: Query[AccountType, Account] =
+  val selectAll: Query[Void, ClientAccount] =
     sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
-        FROM accounts AS a
-        WHERE a.type = $accountType
-       """.query(accountDecoder)
-
-  val selectAll: Query[Void, Account] =
-    sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
        """.query(accountDecoder)
 
-  val selectClosedAfter: Query[LocalDate, Account] =
+  val selectClosedAfter: Query[LocalDate, ClientAccount] =
     sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.dateOfClose >= $date
        """.query(accountDecoder)
 
-  val selectAllClosed: Query[Void, Account] =
+  val selectAllClosed: Query[Void, ClientAccount] =
     sql"""
-        SELECT a.no, a.name, a.type, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
+        SELECT a.no, a.name, a.dateOfOpen, a.dateOfClose, a.baseCurrency, a.tradingCurrency, a.settlementCurrency
         FROM accounts AS a
         WHERE a.dateOfClose IS NOT NULL
        """.query(accountDecoder)
 
-  val insertAccount: Command[Account] =
+  val insertAccount: Command[ClientAccount] =
     sql"""
         INSERT INTO accounts
         VALUES $accountEncoder
        """.command
 
-  val updateAccount: Command[Account] =
-    sql"""
-        UPDATE accounts SET
-          name                = $accountName,
-          type                = $accountType,
-          dateOfOpen          = $timestamp,
-          dateOfClose         = ${timestamp.opt},
-          baseCurrency        = $currency,
-          tradingCurrency     = ${currency.opt},
-          settlementCurrency  = ${currency.opt}
-        WHERE no = $accountNo
-       """.command.contramap {
-      case Account(no, nm, dop, doc, AccountType.Trading, bc, tc, _) =>
-        nm ~ AccountType.Trading ~ dop ~ doc ~ bc ~ tc ~ None ~ no
-
-      case Account(no, nm, dop, doc, AccountType.Settlement, bc, _, sc) =>
-        nm ~ AccountType.Settlement ~ dop ~ doc ~ bc ~ None ~ sc ~ no
-
-      case Account(no, nm, dop, doc, AccountType.Both, bc, tc, sc) =>
-        nm ~ AccountType.Both ~ dop ~ doc ~ bc ~ tc ~ sc ~ no
-    }
-
-  val upsertAccount: Command[Account] =
+  val upsertAccount: Command[ClientAccount] =
     sql"""
         INSERT INTO accounts
         VALUES $accountEncoder
         ON CONFLICT(no) DO UPDATE SET
           name                 = EXCLUDED.name,
-          type                 = EXCLUDED.type,
           dateOfOpen           = EXCLUDED.dateOfOpen,
           dateOfClose          = EXCLUDED.dateOfClose,
           baseCurrency         = EXCLUDED.baseCurrency,

@@ -12,16 +12,13 @@ object codecs:
 
   val accountNo: Codec[AccountNo.Type] =
     varchar.eimap[AccountNo.Type] { s =>
-      AccountNo(s).validateNo.toEither.leftMap(_.fold)
+      AccountNo(s).validateNo.toEitherAssociative.leftMap(identity)
     }(_.value)
 
   val accountName: Codec[AccountName.Type] =
     varchar.eimap[AccountName.Type] { s =>
-      AccountName(s).validateName.toEither.leftMap(_.fold)
+      AccountName(s).validateName.toEitherAssociative.leftMap(identity)
     }(_.value)
-
-  val accountType: Codec[AccountType] =
-    varchar.imap[AccountType](AccountType(_).get)(_.entryName)
 
   val money: Codec[Money] = numeric.imap[Money](USD(_))(_.amount)
 

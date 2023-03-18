@@ -3,179 +3,199 @@ package model
 
 import java.time.LocalDateTime
 import squants.market.*
-import cats.data.ValidatedNec
-import cats.syntax.all.*
-
+import zio.prelude.Validation
 import utils.Newtype
+import zio.prelude.ZValidation
 
-// top level definition
-def today = LocalDateTime.now
+def today = LocalDateTime.now()
 
-object account:
-
-  // with scala 3.1.0, the above import works
-  // but significant indentation doesn't work
-  def foo(xs: List[Int]) =
-    xs.map(x =>
-      val y = x - 1
-      y * y
-    )
-
-  enum AccountType(val entryName: String):
-    case Trading extends AccountType("Trading")
-    case Settlement extends AccountType("Settlement")
-    case Both extends AccountType("Both")
-
-  object AccountType:
-    def apply(s: String): Option[AccountType] =
-      if (s == "Trading") Some(Trading)
-      else if (s == "Settlement") Some(Settlement)
-      else if (s == "Both") Some(Both)
-      else None
-
-  final case class Account(
+object account {
+  final case class AccountBase(
       no: AccountNo.Type,
       name: AccountName.Type,
       dateOfOpen: LocalDateTime,
       dateOfClose: Option[LocalDateTime],
-      accountType: AccountType,
-      baseCurrency: Currency,
-      tradingCurrency: Option[Currency],
-      settlementCurrency: Option[Currency]
+      baseCurrency: Currency
   )
+
+  sealed trait AccountType
+
+  sealed trait Trading extends AccountType:
+    def tradingCurrency: Currency
+
+  sealed trait Settlement extends AccountType:
+    def settlementCurrency: Currency
+
+  trait Account[C <: AccountType]:
+    private[account] def base: AccountBase
+    def accountType: C
+    def closeAccount(closeDate: LocalDateTime): Validation[String, Account[C]]
+    val no           = base.no
+    val name         = base.name
+    val dateOfOpen   = base.dateOfOpen
+    val dateOfClose  = base.dateOfClose
+    val baseCurrency = base.baseCurrency
+
+  final case class TradingAccount private (
+      private[account] base: AccountBase,
+      accountType: Trading
+  ) extends Account[Trading] {
+    val tradingCurrency = accountType.tradingCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAccount] =
+      close(base, closeDate).map(TradingAccount(_, accountType))
+  }
+
+  final case class SettlementAccount private (
+      private[account] base: AccountBase,
+      accountType: Settlement
+  ) extends Account[Settlement] {
+    val settlementCurrency = accountType.settlementCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, SettlementAccount] =
+      close(base, closeDate).map(SettlementAccount(_, accountType))
+  }
+
+  final case class TradingAndSettlementAccount private (
+      private[account] base: AccountBase,
+      accountType: Trading & Settlement
+  ) extends Account[Trading & Settlement] {
+    val tradingCurrency    = accountType.tradingCurrency
+    val settlementCurrency = accountType.settlementCurrency
+    def closeAccount(closeDate: LocalDateTime): Validation[String, TradingAndSettlementAccount] =
+      close(base, closeDate).map(TradingAndSettlementAccount(_, accountType))
+  }
+
+  type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
   // newtypes for AccountNo
   type AccountNo = String
   object AccountNo extends Newtype[String]
   extension (ano: AccountNo.Type)
-    def validateNo: ValidatedNec[String, AccountNo.Type] =
+    def validateNo: Validation[String, AccountNo.Type] =
       if (ano.value.size > 12 || ano.value.size < 5)
-        s"AccountNo cannot be more than 12 characters or less than 5 characters long".invalidNec
-      else ano.validNec
+        Validation.fail(s"AccountNo cannot be more than 12 characters or less than 5 characters long")
+      else Validation.succeed(ano)
 
   // newtypes for AccountName
   type AccountName = String
   object AccountName extends Newtype[String]
   extension (aname: AccountName.Type)
-    def validateName: ValidatedNec[String, AccountName.Type] =
+    def validateName: Validation[String, AccountName.Type] =
       if (aname.value.isEmpty || aname.value.isBlank)
-        s"Account Name cannot be empty".invalidNec
-      else aname.validNec
+        Validation.fail(s"Account Name cannot be empty")
+      else Validation.succeed(aname)
 
-  object Account:
-    // smart constructors
+  object TradingAccount:
     def tradingAccount(
         no: AccountNo.Type,
         name: AccountName.Type,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
-        baseCcy: Currency,
+        dateOfOpen: Option[LocalDateTime],
+        dateOfClose: Option[LocalDateTime],
+        baseCurrency: Currency,
         tradingCcy: Currency
-    ): ValidatedNec[String, Account] = {
-      (
+    ): Validation[String, TradingAccount] =
+      Validation.validateWith(
         no.validateNo,
         name.validateName,
-        validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
-        Account(
-          n,
-          nm,
-          d._1,
-          d._2,
-          AccountType.Trading,
-          baseCcy,
-          tradingCcy.some,
-          None
+        validateOpenCloseDate(dateOfOpen.getOrElse(today), dateOfClose)
+      ) { (n, nm, d) =>
+        TradingAccount(
+          base = AccountBase(no, name, d._1, d._2, baseCurrency),
+          accountType = new Trading:
+            def tradingCurrency = tradingCcy
         )
       }
-    }
 
+  object SettlementAccount:
     def settlementAccount(
         no: AccountNo.Type,
         name: AccountName.Type,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
-        baseCcy: Currency,
+        dateOfOpen: Option[LocalDateTime],
+        dateOfClose: Option[LocalDateTime],
+        baseCurrency: Currency,
         settlementCcy: Currency
-    ): ValidatedNec[String, Account] = {
-      (
+    ): Validation[String, SettlementAccount] =
+      Validation.validateWith(
         no.validateNo,
         name.validateName,
-        validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
-        Account(
-          n,
-          nm,
-          d._1,
-          d._2,
-          AccountType.Settlement,
-          baseCcy,
-          None,
-          settlementCcy.some
+        validateOpenCloseDate(dateOfOpen.getOrElse(today), dateOfClose)
+      ) { (n, nm, d) =>
+        SettlementAccount(
+          base = AccountBase(no, name, d._1, d._2, baseCurrency),
+          accountType = new Settlement:
+            def settlementCurrency = settlementCcy
         )
       }
-    }
 
+  object TradingAndSettlementAccount:
+    private abstract class Both() extends Trading, Settlement
     def tradingAndSettlementAccount(
         no: AccountNo.Type,
         name: AccountName.Type,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
-        baseCcy: Currency,
+        dateOfOpen: Option[LocalDateTime],
+        dateOfClose: Option[LocalDateTime],
+        baseCurrency: Currency,
         tradingCcy: Currency,
         settlementCcy: Currency
-    ): ValidatedNec[String, Account] = {
-      (
+    ): Validation[String, TradingAndSettlementAccount] =
+      Validation.validateWith(
         no.validateNo,
         name.validateName,
-        validateOpenCloseDate(openDate.getOrElse(today), closeDate)
-      ).mapN { (n, nm, d) =>
-        Account(
-          n,
-          nm,
-          d._1,
-          d._2,
-          AccountType.Both,
-          baseCcy,
-          tradingCcy.some,
-          settlementCcy.some
+        validateOpenCloseDate(dateOfOpen.getOrElse(today), dateOfClose)
+      ) { (n, nm, d) =>
+        TradingAndSettlementAccount(
+          base = AccountBase(no, name, d._1, d._2, baseCurrency),
+          accountType = new Both:
+            def tradingCurrency    = tradingCcy
+            def settlementCurrency = settlementCcy
         )
       }
-    }
 
-    private def validateOpenCloseDate(
-        od: LocalDateTime,
-        cd: Option[LocalDateTime]
-    ): ValidatedNec[String, (LocalDateTime, Option[LocalDateTime])] =
-      cd.map { c =>
-        if (c isBefore od)
-          s"Close date [$c] cannot be earlier than open date [$od]".invalidNec
-        else (od, cd).validNec
-      }.getOrElse { (od, cd).validNec }
+  private def validateOpenCloseDate(
+      od: LocalDateTime,
+      cd: Option[LocalDateTime]
+  ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
+    cd.map { c =>
+      if (c isBefore od)
+        Validation.fail(s"Close date [$c] cannot be earlier than open date [$od]")
+      else Validation.succeed((od, cd))
+    }.getOrElse(Validation.succeed((od, cd)))
 
-    private def validateAccountAlreadyClosed(
-        a: Account
-    ): ValidatedNec[String, Account] = {
-      if (a.dateOfClose.isDefined)
-        s"Account ${a.no} is already closed".invalidNec
-      else a.validNec
-    }
+  private def validateAccountAlreadyClosed(
+      a: AccountBase
+  ): Validation[String, AccountBase] = {
+    if (a.dateOfClose.isDefined)
+      Validation.fail(s"Account ${a.no} is already closed")
+    else Validation.succeed(a)
+  }
 
-    private def validateCloseDate(
-        a: Account,
-        cd: LocalDateTime
-    ): ValidatedNec[String, LocalDateTime] = {
-      if (cd isBefore a.dateOfOpen)
-        s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]".invalidNec
-      else cd.validNec
-    }
+  private def validateCloseDate(
+      a: AccountBase,
+      cd: LocalDateTime
+  ): Validation[String, LocalDateTime] =
+    if (cd isBefore a.dateOfOpen)
+      Validation.fail(s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]")
+    else Validation.succeed(cd)
 
-    def close(
-        a: Account,
-        closeDate: LocalDateTime
-    ): ValidatedNec[String, Account] = {
-      (validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate))
-        .mapN { (acc, _) =>
-          acc.copy(dateOfClose = Some(closeDate))
-        }
-    }
+  private def close(
+      a: AccountBase,
+      closeDate: LocalDateTime
+  ): Validation[String, AccountBase] =
+    Validation
+      .validateWith(validateAccountAlreadyClosed(a), validateCloseDate(a, closeDate)) { (acc, _) =>
+        acc.copy(dateOfClose = Some(closeDate))
+      }
+}
+
+object Main {
+  import account._
+  val ta = TradingAccount
+    .tradingAccount(
+      no = AccountNo("a-123456"),
+      name = AccountName("debasish ghosh"),
+      baseCurrency = USD,
+      tradingCcy = USD,
+      dateOfOpen = None,
+      dateOfClose = None
+    )
+    .fold(errs => throw new Exception(errs.mkString), identity)
+}
