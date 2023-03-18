@@ -182,7 +182,7 @@ object Main:
   import account._
   val ta = TradingAccount
     .tradingAccount(
-      no = AccountNo("a-123456"),
+      no = AccountNo(NonEmptyString("a-123456")),
       name = AccountName("debasish ghosh"),
       baseCurrency = USD,
       tradingCcy = USD,
