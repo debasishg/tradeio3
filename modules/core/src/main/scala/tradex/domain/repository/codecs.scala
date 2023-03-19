@@ -1,11 +1,11 @@
 package tradex.domain
 package repository
 
-import cats.syntax.all._
-import skunk._
-import skunk.codec.all._
-import squants.market._
-import model.account._
+import cats.syntax.all.*
+import skunk.*
+import skunk.codec.all.*
+import squants.market.*
+import model.account.*
 
 object codecs:
   given MoneyContext = defaultMoneyContext

@@ -1,14 +1,14 @@
 object Versions {
   val catsVersion = "2.6.1"
-  val catsEffectVersion = "3.2.9"
-  val scalaVersion = "3.1.0"
+  val catsEffectVersion = "3.4.8"
+  val scalaVersion = "3.2.2"
   val log4j2Version = "2.13.1"
   val logbackVersion = "1.2.6"
   val squantsVersion = "1.8.3"
   val circeVersion = "0.14.1"
   val monocleVersion = "3.1.0"
-  val skunkVersion = "0.2.2"
+  val skunkVersion = "0.5.1"
   val zioVersion = "2.0.10"
   val zioPreludeVersion = "1.0.0-RC18"
-  val zioInteropCatsVersion = "13.0.0.2"
+  val zioInteropCatsVersion = "23.0.0.2"
 }

@@ -1,11 +1,11 @@
 package tradex.domain
 package model
 
-import zio.prelude._
-import zio.prelude.Assertion._
+import zio.prelude.*
+import zio.prelude.Assertion.*
 import io.circe.{ Decoder, Encoder }
-import io.circe.generic.semiauto._
-import cats.syntax.all._
+import io.circe.generic.semiauto.*
+import cats.syntax.all.*
 import java.time.Instant
 import squants.market.Money
 
