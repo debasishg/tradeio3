@@ -3,7 +3,7 @@ package repository
 package live
 
 import java.time.LocalDate
-import cats.syntax.all._
+import cats.syntax.all.*
 import cats.effect.{ Concurrent, Resource }
 import skunk.*
 import skunk.codec.all.*
@@ -12,49 +12,48 @@ import skunk.implicits.*
 import model.account.*
 import codecs.{ given, * }
 import zio.{ Task, ZLayer }
-import zio.interop.catz._
+import zio.stream.ZStream
+import zio.interop.catz.*
+import zio.stream.interop.fs2z.*
 
-final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(using Concurrent[Task])
-    extends AccountRepository:
+final case class AccountRepositoryLive(session: Session[Task])(using Concurrent[Task]) extends AccountRepository:
   import AccountRepositorySQL._
 
   def query(no: AccountNo): Task[Option[ClientAccount]] =
-    postgres.use { session =>
-      session.prepare(selectByAccountNo).use { ps =>
-        ps.option(no)
-      }
+    session.prepare(selectByAccountNo).flatMap { ps =>
+      ps.option(no)
     }
 
   def store(a: ClientAccount, upsert: Boolean = true): Task[ClientAccount] =
-    postgres.use { session =>
-      session
-        .prepare((if (upsert) upsertAccount else insertAccount))
-        .use { cmd =>
-          cmd.execute(a).void.map(_ => a)
-        }
-    }
+    session
+      .prepare((if (upsert) upsertAccount else insertAccount))
+      .flatMap { cmd =>
+        cmd.execute(a).void.map(_ => a)
+      }
 
   def query(openedOn: LocalDate): Task[List[ClientAccount]] =
-    postgres.use { session =>
-      session.prepare(selectByOpenedDate).use { ps =>
-        ps.stream(openedOn, 1024).compile.toList
-      }
+    session.prepare(selectByOpenedDate).flatMap { ps =>
+      ps.stream(openedOn, 1024).compile.toList
     }
 
-  def all: Task[List[ClientAccount]] = postgres.use(_.execute(selectAll))
+  def all: Task[List[ClientAccount]] = session.execute(selectAll)
 
   def allClosed(closeDate: Option[LocalDate]): Task[List[ClientAccount]] =
-    postgres.use { session =>
-      closeDate
-        .map { cd =>
-          session.prepare(selectClosedAfter).use { ps =>
-            ps.stream(cd, 1024).compile.toList
-          }
+    closeDate
+      .map { cd =>
+        session.prepare(selectClosedAfter).flatMap { ps =>
+          ps.stream(cd, 1024).compile.toList
         }
-        .getOrElse {
-          session.execute(selectAllClosed)
-        }
-    }
+      }
+      .getOrElse {
+        session.execute(selectAllClosed)
+      }
+
+  def streamAllAccounts: ZStream[Any, Throwable, ClientAccount] =
+    for {
+      ps      <- fs2.Stream.eval(session.prepare(selectAll)).toZStream()
+      account <- ps.stream(Void, 512).toZStream()
+    } yield account
 
 private object AccountRepositorySQL:
 

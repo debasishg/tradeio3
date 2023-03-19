@@ -4,6 +4,7 @@ package repository
 import java.time.LocalDate
 import model.account.*
 import zio.Task
+import zio.stream.ZStream
 
 trait AccountRepository:
 
@@ -21,3 +22,5 @@ trait AccountRepository:
 
   /** all closed accounts, if date supplied then all closed after that date */
   def allClosed(closeDate: Option[LocalDate]): Task[List[ClientAccount]]
+
+  def streamAllAccounts: ZStream[Any, Throwable, ClientAccount]
