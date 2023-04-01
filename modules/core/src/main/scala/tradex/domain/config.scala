@@ -1,13 +1,11 @@
 package tradex.domain
-package config
 
-import zio.config._, typesafe._, magnolia._
+import zio.config.*, typesafe.*, magnolia.*
 import zio.{ Config, TaskLayer, ZLayer }
 import zio.Config.Secret
-import config.AppConfig._
 
 object config:
-  final case class AppConfig(postgreSQL: PostgreSQLConfig, tradingConfig: TradingConfig)
+  final case class AppConfig(postgreSQL: AppConfig.PostgreSQLConfig, tradingConfig: AppConfig.TradingConfig)
 
   object AppConfig:
     final case class PostgreSQLConfig(
@@ -25,7 +23,7 @@ object config:
         zeroBalanceAllowed: Boolean
     )
 
-  type AllConfig = AppConfig with TradingConfig with PostgreSQLConfig
+  type AllConfig = AppConfig with AppConfig.TradingConfig with AppConfig.PostgreSQLConfig
 
   final val Root = "tradex"
 
