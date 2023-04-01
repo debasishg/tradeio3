@@ -11,4 +11,5 @@ object Versions {
   val zioVersion = "2.0.10"
   val zioPreludeVersion = "1.0.0-RC18"
   val zioInteropCatsVersion = "23.0.0.2"
+  val zioConfigVersion = "4.0.0-RC13"
 }
