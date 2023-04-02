@@ -29,7 +29,7 @@ object config:
 
   private final val Descriptor = deriveConfig[AppConfig]
 
-  val appConfig = ZLayer(TypesafeConfigProvider.fromResourcePath().nested(Root).load(Descriptor))
+  private val appConfig = ZLayer(TypesafeConfigProvider.fromResourcePath().nested(Root).load(Descriptor))
 
   val live: TaskLayer[AllConfig] = appConfig >+>
     appConfig.project(_.postgreSQL) >+>

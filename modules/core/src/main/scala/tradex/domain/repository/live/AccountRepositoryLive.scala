@@ -16,44 +16,59 @@ import zio.stream.ZStream
 import zio.interop.catz.*
 import zio.stream.interop.fs2z.*
 
-final case class AccountRepositoryLive(session: Session[Task])(using Concurrent[Task]) extends AccountRepository:
+final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(using Concurrent[Task])
+    extends AccountRepository:
   import AccountRepositorySQL._
 
   def query(no: AccountNo): Task[Option[ClientAccount]] =
-    session.prepare(selectByAccountNo).flatMap { ps =>
-      ps.option(no)
+    postgres.use { session =>
+      session.prepare(selectByAccountNo).flatMap { ps =>
+        ps.option(no)
+      }
     }
 
   def store(a: ClientAccount, upsert: Boolean = true): Task[ClientAccount] =
-    session
-      .prepare((if (upsert) upsertAccount else insertAccount))
-      .flatMap { cmd =>
-        cmd.execute(a).void.map(_ => a)
-      }
-
-  def query(openedOn: LocalDate): Task[List[ClientAccount]] =
-    session.prepare(selectByOpenedDate).flatMap { ps =>
-      ps.stream(openedOn, 1024).compile.toList
+    postgres.use { session =>
+      session
+        .prepare((if (upsert) upsertAccount else insertAccount))
+        .flatMap { cmd =>
+          cmd.execute(a).void.map(_ => a)
+        }
     }
 
-  def all: Task[List[ClientAccount]] = session.execute(selectAll)
+  def query(openedOn: LocalDate): Task[List[ClientAccount]] =
+    postgres.use { session =>
+      session.prepare(selectByOpenedDate).flatMap { ps =>
+        ps.stream(openedOn, 1024).compile.toList
+      }
+    }
+
+  def all: Task[List[ClientAccount]] = postgres.use { session => session.execute(selectAll) }
 
   def allClosed(closeDate: Option[LocalDate]): Task[List[ClientAccount]] =
-    closeDate
-      .map { cd =>
-        session.prepare(selectClosedAfter).flatMap { ps =>
-          ps.stream(cd, 1024).compile.toList
+    postgres.use { session =>
+      closeDate
+        .map { cd =>
+          session.prepare(selectClosedAfter).flatMap { ps =>
+            ps.stream(cd, 1024).compile.toList
+          }
         }
-      }
-      .getOrElse {
-        session.execute(selectAllClosed)
-      }
+        .getOrElse {
+          session.execute(selectAllClosed)
+        }
+    }
 
+  def streamAllAccounts: ZStream[Any, Throwable, ClientAccount] = ???
+
+/*
   def streamAllAccounts: ZStream[Any, Throwable, ClientAccount] =
-    for {
-      ps      <- fs2.Stream.eval(session.prepare(selectAll)).toZStream()
-      account <- ps.stream(Void, 512).toZStream()
-    } yield account
+    postgres.use { session =>
+      for {
+        ps      <- fs2.Stream.eval(session.prepare(selectAll)).toZStream()
+        account <- ps.stream(Void, 512).toZStream()
+      } yield account
+    }
+ */
 
 private object AccountRepositorySQL:
 

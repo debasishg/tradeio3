@@ -12,7 +12,6 @@ import cats.effect.std.Console
 import cats.syntax.all._
 import cats.effect.kernel.{ Resource, Temporal }
 import fs2.io.net.Network
-import zio.interop.catz.*
 import tradex.domain.config.AppConfig
 import config.AppConfig.PostgreSQLConfig
 
@@ -21,7 +20,6 @@ sealed abstract class AppResources private (
 )
 
 object AppResources {
-
   def make(
       cfg: AppConfig
   )(using Temporal[Task], natchez.Trace[Task], Network[Task], Console[Task]): Resource[Task, AppResources] = {
