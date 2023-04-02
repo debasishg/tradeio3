@@ -33,5 +33,15 @@ object Main extends ZIOAppDefault:
     config.live
   )
 
+  def streamUsecase =
+    ZIO
+      .serviceWith[AppResources](_.postgres)
+      .flatMap { res =>
+        res.use { session =>
+          AccountRepositoryLive.streamAccountsAndDoStuff(session)
+        }
+      }
+
   override def run =
-    ZIO.serviceWithZIO[AccountService](_.invoke).provide(live)
+    streamUsecase.provide(config.live >>> appResourcesL) *>
+      ZIO.serviceWithZIO[AccountService](_.invoke).provide(live)

@@ -15,6 +15,8 @@ import zio.{ Task, ZLayer }
 import zio.stream.ZStream
 import zio.interop.catz.*
 import zio.stream.interop.fs2z.*
+import zio.ZIO
+import zio.Chunk
 
 final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(using Concurrent[Task])
     extends AccountRepository:
@@ -57,18 +59,6 @@ final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(
           session.execute(selectAllClosed)
         }
     }
-
-  def streamAllAccounts: ZStream[Any, Throwable, ClientAccount] = ???
-
-/*
-  def streamAllAccounts: ZStream[Any, Throwable, ClientAccount] =
-    postgres.use { session =>
-      for {
-        ps      <- fs2.Stream.eval(session.prepare(selectAll)).toZStream()
-        account <- ps.stream(Void, 512).toZStream()
-      } yield account
-    }
- */
 
 private object AccountRepositorySQL:
 
@@ -180,3 +170,10 @@ private object AccountRepositorySQL:
 
 object AccountRepositoryLive:
   val layer = ZLayer.fromFunction(AccountRepositoryLive.apply _)
+
+  def streamAccountsAndDoStuff(
+      session: Session[Task]
+  ): Task[Long] =
+    session
+      .prepare(AccountRepositorySQL.selectAll)           // prepare the query once
+      .flatMap(_.stream(Void, 512).toZStream().runCount) // run the streaming logic within the flatMap
