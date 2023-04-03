@@ -8,7 +8,7 @@ import java.util.UUID
 package object model extends OrphanInstances
 
 // instances for types we don't control
-trait OrphanInstances {
+trait OrphanInstances:
   given Decoder[Money] =
     Decoder[BigDecimal].map(USD.apply)
 
@@ -29,5 +29,3 @@ trait OrphanInstances {
 
   given Encoder[UUID] =
     Encoder[String].contramap(_.toString())
-
-}

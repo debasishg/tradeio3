@@ -23,11 +23,7 @@ final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(
   import AccountRepositorySQL._
 
   def query(no: AccountNo): Task[Option[ClientAccount]] =
-    postgres.use { session =>
-      session.prepare(selectByAccountNo).flatMap { ps =>
-        ps.option(no)
-      }
-    }
+    postgres.use(session => session.prepare(selectByAccountNo).flatMap(ps => ps.option(no)))
 
   def store(a: ClientAccount, upsert: Boolean = true): Task[ClientAccount] =
     postgres.use { session =>
@@ -60,7 +56,7 @@ final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(
         }
     }
 
-private object AccountRepositorySQL:
+private[domain] object AccountRepositorySQL:
 
   val accountEncoder: Encoder[ClientAccount] =
     (
@@ -171,6 +167,7 @@ private object AccountRepositorySQL:
 object AccountRepositoryLive:
   val layer = ZLayer.fromFunction(AccountRepositoryLive.apply _)
 
+  /** stream based computation pattern. Need a session which will be passed from the call site using `AppResources` */
   def streamAccountsAndDoStuff(
       session: Session[Task]
   ): Task[Long] =
