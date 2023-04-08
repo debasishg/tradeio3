@@ -4,6 +4,7 @@ package model
 import java.time.LocalDateTime
 import squants.market.*
 import zio.prelude.{ Newtype, Validation }
+import zio.prelude.Equal
 
 def today = LocalDateTime.now()
 
@@ -61,7 +62,10 @@ object account:
 
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
-  object AccountNo extends Newtype[String]
+  object AccountNo extends Newtype[String]:
+    implicit val AccountNoEqual: Equal[AccountNo] =
+      Equal.default
+
   type AccountNo = AccountNo.Type
   extension (ano: AccountNo)
     def validateNo: Validation[String, AccountNo] =

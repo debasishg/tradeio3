@@ -10,32 +10,24 @@ import java.time.Instant
 import squants.market.Money
 
 object instrument {
-  object ISINCodeString extends Newtype[String]:
+  object ISINCode extends Newtype[String]:
     override inline def assertion: Assertion[String] = hasLength(equalTo(12)) &&
       matches("([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})")
+    given Decoder[ISINCode] = Decoder[String].emap(ISINCode.make(_).toEither.leftMap(_.head))
+    given Encoder[ISINCode] = Encoder[String].contramap(ISINCode.unwrap(_))
 
-  type ISINCodeString = ISINCodeString.Type
-  given Decoder[ISINCodeString] = Decoder[String].emap(ISINCodeString.make(_).toEither.leftMap(_.head))
-  given Encoder[ISINCodeString] = Encoder[String].contramap(ISINCodeString.unwrap(_))
-
-  case class ISINCode(value: ISINCodeString)
-  given Decoder[ISINCode] = deriveDecoder[ISINCode]
-  given Encoder[ISINCode] = deriveEncoder[ISINCode]
+  type ISINCode = ISINCode.Type
 
   case class InstrumentName(value: NonEmptyString)
   given Decoder[InstrumentName] = deriveDecoder[InstrumentName]
   given Encoder[InstrumentName] = deriveEncoder[InstrumentName]
 
-  object LotSizeType extends Subtype[Int]:
+  object LotSize extends Subtype[Int]:
     override inline def assertion: Assertion[Int] = greaterThan(0)
+    given Decoder[LotSize]                        = Decoder[Int].emap(LotSize.make(_).toEither.leftMap(_.head))
+    given Encoder[LotSize]                        = Encoder[Int].contramap(LotSize.unwrap(_))
 
-  type LotSizeType = LotSizeType.Type
-  given Decoder[LotSizeType] = Decoder[Int].emap(LotSizeType.make(_).toEither.leftMap(_.head))
-  given Encoder[LotSizeType] = Encoder[Int].contramap(LotSizeType.unwrap(_))
-
-  case class LotSize(value: LotSizeType)
-  given Decoder[LotSize] = deriveDecoder[LotSize]
-  given Encoder[LotSize] = deriveEncoder[LotSize]
+  type LotSize = LotSize.Type
 
   enum InstrumentType(val entryName: NonEmptyString):
     case CCY extends InstrumentType(NonEmptyString("ccy"))
@@ -49,16 +41,12 @@ object instrument {
     given Decoder[InstrumentType] =
       Decoder[String].map(InstrumentType.valueOf(_))
 
-  object UnitPriceType extends Subtype[BigDecimal]:
-    override inline def assertion: Assertion[BigDecimal] = greaterThan(BigDecimal(0))
-
-  type UnitPriceType = UnitPriceType.Type
-  given Decoder[UnitPriceType] = Decoder[BigDecimal].emap(UnitPriceType.make(_).toEither.leftMap(_.head))
-  given Encoder[UnitPriceType] = Encoder[BigDecimal].contramap(UnitPriceType.unwrap(_))
-
-  case class UnitPrice(value: UnitPriceType)
-  given Decoder[UnitPrice] = deriveDecoder[UnitPrice]
-  given Encoder[UnitPrice] = deriveEncoder[UnitPrice]
+  object UnitPrice extends Subtype[BigDecimal] {
+    override inline def assertion = Assertion.greaterThan(BigDecimal(0))
+    given Decoder[UnitPrice]      = Decoder[BigDecimal].emap(UnitPrice.make(_).toEither.leftMap(_.head))
+    given Encoder[UnitPrice]      = Encoder[BigDecimal].contramap(UnitPrice.unwrap(_))
+  }
+  type UnitPrice = UnitPrice.Type
 
   enum CouponFrequency(val entryName: NonEmptyString):
     case Annual extends CouponFrequency(NonEmptyString("annual"))
@@ -92,7 +80,7 @@ object instrument {
   object Ccy:
     def ccy(isin: ISINCode, name: InstrumentName) =
       Ccy(
-        base = InstrumentBase(isin, name, LotSize(LotSizeType(1)))
+        base = InstrumentBase(isin, name, LotSize(1))
       )
 
   final case class Equity(

@@ -24,7 +24,6 @@ object Dependencies {
     val circeCore    = circe("core")
     val circeGeneric = circe("generic")
     val circeParser  = circe("parser")
-    val circeRefined = circe("refined")
   }
   object Skunk {
     val skunkCore  = "org.tpolecat" %% "skunk-core"  % skunkVersion
@@ -40,6 +39,6 @@ object Dependencies {
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(squants) ++
-      Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser, Circe.circeRefined) ++ Seq(monocleCore) ++
+      Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser) ++ Seq(monocleCore) ++
       Seq(Skunk.skunkCore, Skunk.skunkCirce)
 }
