@@ -8,6 +8,7 @@ import instrument._
 import account._
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto.*
+import cats.implicits.catsSyntaxEither
 
 object order {
   object OrderNo extends Newtype[NonEmptyString]:
@@ -24,6 +25,8 @@ object order {
 
   object Quantity extends Subtype[BigDecimal]:
     override inline def assertion = Assertion.greaterThan(BigDecimal(0))
+    given Decoder[Quantity]       = Decoder[BigDecimal].emap(Quantity.make(_).toEither.leftMap(_.head))
+    given Encoder[Quantity]       = Encoder[BigDecimal].contramap(Quantity.unwrap(_))
 
   type Quantity = Quantity.Type
 

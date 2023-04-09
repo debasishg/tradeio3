@@ -44,7 +44,8 @@ lazy val compilerOptions = {
     "-language:postfixOps",
     "-Ywarn-value-discard",
     "-Ymacro-annotations",
-    "-Ywarn-unused:imports"
+    "-Ywarn-unused:imports",
+    "-Xmax-inlines=64"
   )
 
   scalacOptions ++= commonOptions

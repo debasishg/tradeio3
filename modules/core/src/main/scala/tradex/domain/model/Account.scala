@@ -1,10 +1,12 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import squants.market.*
-import zio.prelude.{ Newtype, Validation }
-import zio.prelude.Equal
+import zio.prelude.{ Equal, Newtype, Validation }
+import io.circe.{ Decoder, Encoder }
+import io.circe.generic.semiauto.*
+import cats.implicits.catsSyntaxEither
+import java.time.LocalDateTime
 
 def today = LocalDateTime.now()
 
@@ -63,6 +65,8 @@ object account:
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
   object AccountNo extends Newtype[String]:
+    given Decoder[AccountNo] = Decoder[String].emap(AccountNo.make(_).toEither.leftMap(_.head))
+    given Encoder[AccountNo] = Encoder[String].contramap(AccountNo.unwrap(_))
     implicit val AccountNoEqual: Equal[AccountNo] =
       Equal.default
 
@@ -73,7 +77,10 @@ object account:
         Validation.fail(s"AccountNo cannot be more than 12 characters or less than 5 characters long")
       else Validation.succeed(ano)
 
-  object AccountName extends Newtype[String]
+  object AccountName extends Newtype[String]:
+    given Decoder[AccountName] = Decoder[String].emap(AccountName.make(_).toEither.leftMap(_.head))
+    given Encoder[AccountName] = Encoder[String].contramap(AccountName.unwrap(_))
+
   type AccountName = AccountName.Type
   extension (aname: AccountName)
     def validateName: Validation[String, AccountName] =
@@ -82,6 +89,9 @@ object account:
       else Validation.succeed(aname)
 
   object TradingAccount:
+    // given Decoder[TradingAccount] = deriveDecoder[TradingAccount]
+    // given Encoder[TradingAccount] = deriveEncoder[TradingAccount]
+
     def tradingAccount(
         no: AccountNo,
         name: AccountName,

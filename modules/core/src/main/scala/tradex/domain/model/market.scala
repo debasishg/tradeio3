@@ -3,7 +3,7 @@ package model
 
 import io.circe.{ Decoder, Encoder }
 
-object market {
+object market:
 
   enum Market(val entryName: NonEmptyString):
     case NewYork extends Market(NonEmptyString("New York"))
@@ -18,4 +18,3 @@ object market {
 
     implicit val marketDecoder: Decoder[Market] =
       Decoder[String].map(Market.valueOf(_))
-}
