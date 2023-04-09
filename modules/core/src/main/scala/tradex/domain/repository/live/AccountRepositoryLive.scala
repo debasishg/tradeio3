@@ -4,7 +4,7 @@ package live
 
 import java.time.LocalDate
 import cats.syntax.all.*
-import cats.effect.{ Concurrent, Resource }
+import cats.effect.Resource
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
@@ -18,8 +18,7 @@ import zio.stream.interop.fs2z.*
 import zio.ZIO
 import zio.Chunk
 
-final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]])(using Concurrent[Task])
-    extends AccountRepository:
+final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]]) extends AccountRepository:
   import AccountRepositorySQL._
 
   def query(no: AccountNo): Task[Option[ClientAccount]] =

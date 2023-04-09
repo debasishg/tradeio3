@@ -11,7 +11,7 @@ object user {
   object UserId extends Newtype[String]:
     given Decoder[UserId] = Decoder[String].emap(UserId.make(_).toEither.leftMap(_.head))
     given Encoder[UserId] = Encoder[String].contramap(UserId.unwrap(_))
-    implicit val AccountNoEqual: Equal[UserId] =
+    implicit val UserIdEqual: Equal[UserId] =
       Equal.default
 
   type UserId = UserId.Type

@@ -11,7 +11,7 @@ import io.circe.generic.semiauto.*
 import cats.implicits.catsSyntaxEither
 
 object order {
-  object OrderNo extends Newtype[NonEmptyString]:
+  object OrderNo extends Newtype[String]:
     implicit val OrderNoEqual: Equal[OrderNo] =
       Equal.default
 
