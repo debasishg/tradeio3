@@ -63,6 +63,9 @@ object codecs:
       LotSize.make(s).toEitherAssociative.leftMap(identity)
     }(LotSize.unwrap(_))
 
+  val couponFrequency: Codec[CouponFrequency] =
+    varchar.imap[CouponFrequency](CouponFrequency.valueOf(_))(_.entryName)
+
   val executionRefNo: Codec[ExecutionRefNo] =
     varchar.eimap[ExecutionRefNo] { s =>
       ExecutionRefNo(s).validateNo.toEitherAssociative.leftMap(identity)
@@ -75,6 +78,12 @@ object codecs:
 
   val market: Codec[Market] =
     varchar.imap[Market](Market.valueOf(_))(_.entryName)
+
+  val instrumentType: Codec[InstrumentType] =
+    varchar.imap[InstrumentType](InstrumentType.valueOf(_))(_.entryName)
+
+  val buySell: Codec[BuySell] =
+    varchar.imap[BuySell](BuySell.valueOf(_))(_.entryName)
 
   val taxFeeId: Codec[TaxFeeId] =
     varchar.imap[TaxFeeId](TaxFeeId.valueOf(_))(_.entryName)

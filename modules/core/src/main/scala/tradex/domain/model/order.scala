@@ -9,6 +9,7 @@ import account._
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto.*
 import cats.implicits.catsSyntaxEither
+import java.time.LocalDateTime
 
 object order {
   object OrderNo extends Newtype[String]:
@@ -41,7 +42,7 @@ object order {
     given Decoder[BuySell] =
       Decoder[String].map(BuySell.valueOf(_))
 
-  private[domain] final case class LineItem private (
+  final case class LineItem private (
       orderNo: OrderNo,
       isin: ISINCode,
       quantity: Quantity,
@@ -51,7 +52,7 @@ object order {
 
   final case class Order private (
       no: OrderNo,
-      date: Instant,
+      date: LocalDateTime,
       accountNo: AccountNo,
       items: NonEmptyList[LineItem]
   )
@@ -59,8 +60,17 @@ object order {
   object Order:
     def make(
         no: OrderNo,
-        orderDate: Instant,
+        orderDate: LocalDateTime,
         accountNo: AccountNo,
         items: NonEmptyList[LineItem]
     ): Order = Order(no, orderDate, accountNo, items)
+
+  object LineItem:
+    def make(
+        orderNo: OrderNo,
+        isin: ISINCode,
+        quantity: Quantity,
+        unitPrice: UnitPrice,
+        buySell: BuySell
+    ): LineItem = LineItem(orderNo, isin, quantity, unitPrice, buySell)
 }

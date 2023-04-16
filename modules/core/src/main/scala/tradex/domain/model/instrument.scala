@@ -6,8 +6,9 @@ import zio.prelude.Assertion.*
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto.*
 import cats.syntax.all.*
-import java.time.Instant
+import java.time.LocalDateTime
 import squants.market.Money
+import java.time.LocalDateTime
 
 object instrument {
   object ISINCode extends Newtype[String]:
@@ -85,13 +86,13 @@ object instrument {
 
   final case class Equity(
       private[instrument] base: InstrumentBase,
-      dateOfIssue: Instant,
+      dateOfIssue: LocalDateTime,
       unitPrice: UnitPrice
   ) extends Instrument:
     val instrumentType = InstrumentType.Equity
 
   object Equity:
-    def equity(isin: ISINCode, name: InstrumentName, lotSize: LotSize, issueDate: Instant, unitPrice: UnitPrice) =
+    def equity(isin: ISINCode, name: InstrumentName, lotSize: LotSize, issueDate: LocalDateTime, unitPrice: UnitPrice) =
       Equity(
         base = InstrumentBase(isin, name, lotSize),
         dateOfIssue = issueDate,
@@ -100,8 +101,8 @@ object instrument {
 
   final case class FixedIncome(
       private[instrument] base: InstrumentBase,
-      dateOfIssue: Instant,
-      dateOfMaturity: Option[Instant],
+      dateOfIssue: LocalDateTime,
+      dateOfMaturity: Option[LocalDateTime],
       couponRate: Money,
       couponFrequency: CouponFrequency
   ) extends Instrument:
@@ -112,8 +113,8 @@ object instrument {
         isin: ISINCode,
         name: InstrumentName,
         lotSize: LotSize,
-        issueDate: Instant,
-        maturityDate: Option[Instant],
+        issueDate: LocalDateTime,
+        maturityDate: Option[LocalDateTime],
         couponRate: Money,
         couponFrequency: CouponFrequency
     ): Validation[String, FixedIncome] =
@@ -128,9 +129,9 @@ object instrument {
       }
 
     private def validateIssueAndMaturityDate(
-        id: Instant,
-        md: Option[Instant]
-    ): Validation[String, (Instant, Option[Instant])] =
+        id: LocalDateTime,
+        md: Option[LocalDateTime]
+    ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
       md.map { c =>
         if (c isBefore id)
           Validation.fail(s"Maturity date [$c] cannot be earlier than issue date [$id]")
