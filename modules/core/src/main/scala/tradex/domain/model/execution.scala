@@ -6,7 +6,7 @@ import instrument.*
 import order.*
 import market.*
 import account.*
-import java.time.Instant
+import java.time.LocalDateTime
 
 object execution {
 
@@ -23,6 +23,7 @@ object execution {
       else Validation.succeed(eno)
 
   final case class Execution private (
+      executionRefNo: ExecutionRefNo,
       accountNo: AccountNo,
       orderNo: OrderNo,
       isin: ISINCode,
@@ -30,8 +31,7 @@ object execution {
       buySell: BuySell,
       unitPrice: UnitPrice,
       quantity: Quantity,
-      dateOfExecution: Instant,
-      exchangeExecutionRefNo: Option[String] = None,
-      executionRefNo: Option[ExecutionRefNo] = None
+      dateOfExecution: LocalDateTime,
+      exchangeExecutionRefNo: Option[String] = None
   )
 }

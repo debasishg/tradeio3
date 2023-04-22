@@ -19,7 +19,7 @@ import zio.interop.catz.*
 final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) extends OrderRepository:
   import OrderRepositorySQL._
 
-  implicit val oderConcatAssociative: Associative[Order] =
+  implicit val orderConcatAssociative: Associative[Order] =
     new Associative[Order]:
       def combine(x: => Order, y: => Order): Order =
         Order.make(

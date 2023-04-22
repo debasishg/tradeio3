@@ -10,7 +10,9 @@ import instrument.*
 import order.*
 import user.*
 import squants.market.*
-import java.time.Instant
+import com.softwaremill.quicklens.*
+import zio.{ Random, Task, ZIO }
+import java.time.LocalDateTime
 
 object trade:
   object TradeRefNo extends Newtype[String]:
@@ -82,19 +84,19 @@ object trade:
   ): Money =
     principal(trade) + taxFeeAmounts.map(_.amount).foldLeft(Money(0))(_ + _)
 
-  final case class Trade private (
+  final case class Trade private[domain] (
+      tradeRefNo: TradeRefNo,
       accountNo: AccountNo,
       isin: ISINCode,
       market: Market,
       buySell: BuySell,
       unitPrice: UnitPrice,
       quantity: Quantity,
-      tradeDate: Instant,
-      valueDate: Option[Instant] = None,
+      tradeDate: LocalDateTime,
+      valueDate: Option[LocalDateTime] = None,
       userId: Option[UserId] = None,
       taxFees: List[TradeTaxFee] = List.empty,
-      netAmount: Option[Money] = None,
-      tradeRefNo: Option[TradeRefNo] = None
+      netAmount: Option[Money] = None
   )
 
   private[domain] final case class TradeTaxFee(
@@ -117,38 +119,37 @@ object trade:
         buySell: BuySell,
         unitPrice: UnitPrice,
         quantity: Quantity,
-        tradeDate: Instant,
-        valueDate: Option[Instant] = None,
+        tradeDate: LocalDateTime,
+        valueDate: Option[LocalDateTime] = None,
         userId: Option[UserId] = None
-    ): Validation[String, Trade] = {
-      validateTradeValueDate(tradeDate, valueDate).map { case (td, maybeVd) =>
-        Trade(
-          accountNo,
-          isin,
-          market,
-          buySell,
-          unitPrice,
-          quantity,
-          td,
-          maybeVd,
-          userId
-        )
-      }
-    }
+    ): Task[Trade] = (for
+      tdvd  <- ZIO.fromEither(validateTradeValueDate(tradeDate, valueDate).toEither)
+      refNo <- Random.nextUUID.map(uuid => TradeRefNo.make(uuid.toString).toEither).absolve
+    yield Trade(
+      refNo,
+      accountNo,
+      isin,
+      market,
+      buySell,
+      unitPrice,
+      quantity,
+      tdvd._1,
+      tdvd._2,
+      userId
+    )).mapError(errors => new Throwable(errors.mkString(",")))
 
     private def validateTradeValueDate(
-        td: Instant,
-        vd: Option[Instant]
-    ): Validation[String, (Instant, Option[Instant])] =
+        td: LocalDateTime,
+        vd: Option[LocalDateTime]
+    ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
       vd.map { v =>
         if (v.isBefore(td)) Validation.fail(s"Value date $v cannot be earlier than trade date $td")
         else Validation.succeed((td, vd))
       }.getOrElse(Validation.succeed((td, vd)))
 
     def withTaxFee(trade: Trade): Trade =
-      if (trade.taxFees.isEmpty && !trade.netAmount.isDefined) {
-        val taxFees =
-          forTrade(trade).map(taxFeeCalculate(trade, _)).getOrElse(List.empty)
-        val netAmt = netAmount(trade, taxFees)
-        trade.copy(taxFees = taxFees, netAmount = Option(netAmt))
-      } else trade
+      if (trade.taxFees.isEmpty && !trade.netAmount.isDefined)
+        val taxFees = forTrade(trade).map(taxFeeCalculate(trade, _)).getOrElse(List.empty)
+        val netAmt  = netAmount(trade, taxFees)
+        trade.modify(_.taxFees).setTo(taxFees).modify(_.netAmount.each).setTo(netAmt)
+      else trade

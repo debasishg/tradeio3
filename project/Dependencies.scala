@@ -31,11 +31,12 @@ object Dependencies {
   }
   val squants = "org.typelevel" %% "squants"  % squantsVersion
   val monocleCore = "dev.optics"      %% "monocle-core" % monocleVersion
+  val quickLens = "com.softwaremill.quicklens" %% "quicklens" % quickLensVersion
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude, Zio.zioInteropCats, Zio.zioConfig, Zio.zioConfigMagnolia, Zio.zioConfigTypesafe, Zio.zioLogging)
+  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude, Zio.zioInteropCats, Zio.zioConfig, Zio.zioConfigMagnolia, Zio.zioConfigTypesafe, Zio.zioLogging, quickLens)
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(squants) ++
