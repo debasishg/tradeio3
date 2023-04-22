@@ -8,7 +8,7 @@ import model.market.*
 import java.time.LocalDate
 import zio.prelude.NonEmptyList
 
-trait TradeRepository {
+trait TradeRepository:
 
   /** query by account number and trade date (compares using the date part only) */
   def query(accountNo: AccountNo, date: LocalDate): Task[List[Trade]]
@@ -24,4 +24,3 @@ trait TradeRepository {
 
   /** store many trades */
   def store(trades: NonEmptyList[Trade]): Task[Unit]
-}

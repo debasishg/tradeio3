@@ -5,11 +5,10 @@ import zio.Task
 import model.execution.*
 import zio.prelude.NonEmptyList
 
-trait ExecutionRepository {
+trait ExecutionRepository:
 
   /** store */
   def store(exe: Execution): Task[Execution]
 
   /** store many executions */
   def store(executions: NonEmptyList[Execution]): Task[Unit]
-}
