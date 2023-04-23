@@ -12,6 +12,7 @@ import zio.interop.catz.*
 import codecs.{ given, * }
 import zio.prelude.NonEmptyList
 import zio.ZLayer
+import java.time.LocalDate
 
 final case class ExecutionRepositoryLive(postgres: Resource[Task, Session[Task]]) extends ExecutionRepository:
   import ExecutionRepositorySQL.*
@@ -36,6 +37,10 @@ private[domain] object ExecutionRepositorySQL:
   val executionEncoder: Encoder[Execution] =
     (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ varchar.opt).values
       .gcontramap[Execution]
+
+  val executionDecoder: Decoder[Execution] =
+    (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ varchar.opt)
+      .gmap[Execution]
 
   val insertExecution: Command[Execution] =
     sql"""
@@ -64,6 +69,13 @@ private[domain] object ExecutionRepositorySQL:
     val enc = executionEncoder.list(n)
     sql"INSERT INTO executions VALUES $enc".command
   }
+
+  val selectByExecutionDate: Query[LocalDate, Execution] =
+    sql"""
+        SELECT e.executionRefNo, e.accountNo, e.orderNo, e.isinCode, e.market, e.buySellFlag, e.unitPrice, e.quantity, e.dateOfExecution, e.exchangeExecutionRefNo
+        FROM executions AS e
+        WHERE DATE(e.dateOfExecution) = $date
+       """.query(executionDecoder)
 
 object ExecutionRepositoryLive:
   val layer = ZLayer.fromFunction(ExecutionRepositoryLive.apply _)

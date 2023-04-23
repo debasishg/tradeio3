@@ -5,6 +5,7 @@ import zio.Task
 import model.order.*
 import java.time.LocalDate
 import zio.prelude.NonEmptyList
+import zio.stream.ZStream
 
 trait OrderRepository:
 
@@ -19,3 +20,8 @@ trait OrderRepository:
 
   /** store many orders */
   def store(orders: NonEmptyList[Order]): Task[Unit]
+
+  /** stream all orders for the day */
+  def streamOrders(
+      executionDate: LocalDate
+  ): ZStream[Any, Throwable, Order] = ???
