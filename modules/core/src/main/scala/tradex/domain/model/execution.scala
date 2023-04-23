@@ -7,20 +7,15 @@ import order.*
 import market.*
 import account.*
 import java.time.LocalDateTime
+import java.util.UUID
 
 object execution {
 
-  object ExecutionRefNo extends Newtype[String]:
+  object ExecutionRefNo extends Newtype[UUID]:
     implicit val ExecutionRefNoEqual: Equal[ExecutionRefNo] =
       Equal.default
 
   type ExecutionRefNo = ExecutionRefNo.Type
-
-  extension (eno: ExecutionRefNo)
-    def validateNo: Validation[String, ExecutionRefNo] =
-      if (ExecutionRefNo.unwrap(eno).size > 12 || ExecutionRefNo.unwrap(eno).size < 5)
-        Validation.fail(s"ExecutionRefNo cannot be more than 12 characters or less than 5 characters long")
-      else Validation.succeed(eno)
 
   final case class Execution private (
       executionRefNo: ExecutionRefNo,

@@ -15,6 +15,7 @@ import zio.prelude.NonEmptyList
 import codecs.{ given, * }
 import zio.interop.catz.*
 import zio.prelude.Associative
+import zio.ZLayer
 
 final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) extends TradeRepository:
   import TradeRepositorySQL.*
@@ -245,3 +246,6 @@ private[domain] object TradeRepositorySQL:
         FROM trades t, tradeTaxFees f
         WHERE t.tradeRefNo = f.tradeRefNo
     """.query(tradeTaxFeeDecoder)
+
+object TradeRepositoryLive:
+  val layer = ZLayer.fromFunction(TradeRepositoryLive.apply _)

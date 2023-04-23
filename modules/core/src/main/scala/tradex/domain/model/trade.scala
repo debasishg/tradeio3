@@ -13,21 +13,16 @@ import squants.market.*
 import com.softwaremill.quicklens.*
 import zio.{ Random, Task, ZIO }
 import java.time.LocalDateTime
+import java.util.UUID
 
 object trade:
-  object TradeRefNo extends Newtype[String]:
-    given Decoder[TradeRefNo] = Decoder[String].emap(TradeRefNo.make(_).toEither.leftMap(_.head))
-    given Encoder[TradeRefNo] = Encoder[String].contramap(TradeRefNo.unwrap(_))
+  object TradeRefNo extends Newtype[UUID]:
+    given Decoder[TradeRefNo] = Decoder[UUID].emap(TradeRefNo.make(_).toEither.leftMap(_.head))
+    given Encoder[TradeRefNo] = Encoder[UUID].contramap(TradeRefNo.unwrap(_))
     implicit val TradeRefNoEqual: Equal[TradeRefNo] =
       Equal.default
 
   type TradeRefNo = TradeRefNo.Type
-
-  extension (rno: TradeRefNo)
-    def validateNo: Validation[String, TradeRefNo] =
-      if (TradeRefNo.unwrap(rno).size > 12 || TradeRefNo.unwrap(rno).size < 5)
-        Validation.fail(s"TradeRefNo cannot be more than 12 characters or less than 5 characters long")
-      else Validation.succeed(rno)
 
   enum TaxFeeId(val entryName: NonEmptyString):
     case TradeTax extends TaxFeeId(NonEmptyString("Trade Tax"))
@@ -124,7 +119,7 @@ object trade:
         userId: Option[UserId] = None
     ): Task[Trade] = (for
       tdvd  <- ZIO.fromEither(validateTradeValueDate(tradeDate, valueDate).toEither)
-      refNo <- Random.nextUUID.map(uuid => TradeRefNo.make(uuid.toString).toEither).absolve
+      refNo <- Random.nextUUID.map(uuid => TradeRefNo.make(uuid).toEither).absolve
     yield Trade(
       refNo,
       accountNo,

@@ -7,7 +7,7 @@ import java.time.LocalDate
 import model.account.*
 import model.order.*
 import zio.prelude.NonEmptyList
-import zio.{ Task, ZIO }
+import zio.{ Task, ZIO, ZLayer }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -150,3 +150,6 @@ private object OrderRepositorySQL:
 
   val deleteLineItems: Command[String] =
     sql"DELETE FROM lineItems WHERE orderNo = $varchar".command
+
+object OrderRepositoryLive:
+  val layer = ZLayer.fromFunction(OrderRepositoryLive.apply _)

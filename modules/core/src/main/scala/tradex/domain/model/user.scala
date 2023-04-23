@@ -5,21 +5,17 @@ import zio.prelude.*
 import scala.util.control.NoStackTrace
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto.*
+import java.util.UUID
 
 object user {
 
-  object UserId extends Newtype[String]:
-    given Decoder[UserId] = Decoder[String].emap(UserId.make(_).toEither.leftMap(_.head))
-    given Encoder[UserId] = Encoder[String].contramap(UserId.unwrap(_))
+  object UserId extends Newtype[UUID]:
+    given Decoder[UserId] = Decoder[UUID].emap(UserId.make(_).toEither.leftMap(_.head))
+    given Encoder[UserId] = Encoder[UUID].contramap(UserId.unwrap(_))
     implicit val UserIdEqual: Equal[UserId] =
       Equal.default
 
   type UserId = UserId.Type
-  extension (uid: UserId)
-    def validateNo: Validation[String, UserId] =
-      if (UserId.unwrap(uid).size > 12 || UserId.unwrap(uid).size < 5)
-        Validation.fail(s"UserId cannot be more than 12 characters or less than 5 characters long")
-      else Validation.succeed(uid)
 
   object UserName extends Newtype[NonEmptyString]:
     given Decoder[UserName] = Decoder[NonEmptyString].emap(UserName.make(_).toEither.leftMap(_.head))
@@ -42,7 +38,7 @@ object user {
   case object UnsupportedOperation               extends NoStackTrace
   case object TokenNotFound                      extends NoStackTrace
 
-  private[domain] final case class User private (
+  private[domain] final case class User private[domain] (
       userId: UserId,
       userName: UserName,
       password: EncryptedPassword

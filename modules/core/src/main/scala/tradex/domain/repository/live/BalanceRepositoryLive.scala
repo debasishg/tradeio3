@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package live
 
-import zio.Task
+import zio.{ Task, ZLayer }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -86,3 +86,6 @@ private[domain] object BalanceRepositorySQL:
           asOf      = EXCLUDED.asOf,
           currency  = EXCLUDED.currency
        """.command
+
+object BalanceeRepositoryLive:
+  val layer = ZLayer.fromFunction(BalanceRepositoryLive.apply _)

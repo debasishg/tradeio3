@@ -67,14 +67,10 @@ object codecs:
     varchar.imap[CouponFrequency](CouponFrequency.valueOf(_))(_.entryName)
 
   val executionRefNo: Codec[ExecutionRefNo] =
-    varchar.eimap[ExecutionRefNo] { s =>
-      ExecutionRefNo(s).validateNo.toEitherAssociative.leftMap(identity)
-    }(ExecutionRefNo.unwrap(_))
+    uuid.imap[ExecutionRefNo](ExecutionRefNo(_))(ExecutionRefNo.unwrap(_))
 
   val tradeRefNo: Codec[TradeRefNo] =
-    varchar.eimap[TradeRefNo] { s =>
-      TradeRefNo(s).validateNo.toEitherAssociative.leftMap(identity)
-    }(TradeRefNo.unwrap(_))
+    uuid.imap[TradeRefNo](TradeRefNo(_))(TradeRefNo.unwrap(_))
 
   val market: Codec[Market] =
     varchar.imap[Market](Market.valueOf(_))(_.entryName)
@@ -89,9 +85,7 @@ object codecs:
     varchar.imap[TaxFeeId](TaxFeeId.valueOf(_))(_.entryName)
 
   val userId: Codec[UserId] =
-    varchar.eimap[UserId] { s =>
-      UserId(s).validateNo.toEitherAssociative.leftMap(identity)
-    }(UserId.unwrap(_))
+    uuid.imap[UserId](UserId(_))(UserId.unwrap(_))
 
   val userName: Codec[UserName] =
     varchar.eimap[UserName] { s =>
