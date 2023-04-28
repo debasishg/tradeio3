@@ -3,55 +3,55 @@ package service
 package live
 
 import java.time.LocalDate
-import zio.Task
+import zio.{ Chunk, Task, ZIO }
 import model.account.*
 import model.trade.*
 import model.execution.*
 import model.order.*
-import repository.ExecutionRepository
-import repository.OrderRepository
+import model.user.*
+import repository.{ ExecutionRepository, OrderRepository }
 import repository.live.ExecutionRepositorySQL
 import skunk.Session
-import zio.stream.ZStream
+import zio.stream.{ ZPipeline, ZStream }
 import zio.interop.catz.*
 import zio.stream.interop.fs2z.*
-import zio.ZIO
-import zio.Chunk
-import zio.stream.ZPipeline
 
 final case class TradingServiceLive(session: Session[Task], orderRepository: OrderRepository) extends TradingService:
 
-  override def generateTrades(date: LocalDate): Task[Chunk[Trade]] =
-    session.prepare(ExecutionRepositorySQL.selectByExecutionDate).flatMap { pq =>
+  override def generateTrades(date: LocalDate, userId: UserId): ZStream[Any, Throwable, Trade] =
+    ZStream.fromZIO(session.prepare(ExecutionRepositorySQL.selectByExecutionDate)).flatMap { pq =>
       pq.stream(date, 512)
         .toZStream()
-        .groupByKey(_.orderNo) { case (orderNo, s) => // group executions by orderNo
-          ZStream.fromZIO(s.runCollect.flatMap(exes => generateTradesFromExecutions(orderNo, exes)))
+        .groupByKey(_.orderNo) { case (orderNo, executions) =>
+          executions
+            .via(executionsWithAccountNo)
+            .via(trades(userId))
         }
-        .runCollect
-        .map(_.flatten)
     }
 
-  private def generateTradesFromExecutions(
-      orderNo: OrderNo,
-      executions: Chunk[Execution]
-  ): Task[Chunk[Trade]] =
-    orderRepository
-      .query(orderNo)
-      .someOrFail(new Throwable("Order Not found"))
-      .flatMap(order => doGenerateTrades(order.accountNo, executions).map(_._2))
-
-  private def doGenerateTrades(accountNo: AccountNo, executions: Chunk[Execution]): Task[(AccountNo, Chunk[Trade])] =
-    ???
-
-  val executionsWithAccountNo: ZPipeline[Any, Throwable, (Execution, OrderNo), (Execution, AccountNo)] =
-    ZPipeline.mapChunksZIO((inputs: Chunk[(Execution, OrderNo)]) =>
-      ZIO.foreach(inputs) { case (exe, orderNo) =>
+  private val executionsWithAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
+    ZPipeline.mapChunksZIO((inputs: Chunk[Execution]) =>
+      ZIO.foreach(inputs) { case exe =>
         orderRepository
-          .query(orderNo)
-          .someOrFail(new Throwable("Order Not found"))
+          .query(exe.orderNo)
+          .someOrFail(new Throwable(s"Order not found for order no ${exe.orderNo}"))
           .map(order => (exe, order.accountNo))
       }
     )
 
-  val trades: ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] = ???
+  private def trades(userId: UserId): ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] =
+    ZPipeline.mapChunksZIO((inputs: Chunk[(Execution, AccountNo)]) =>
+      ZIO.foreach(inputs) { case (exe, accountNo) =>
+        Trade.trade(
+          accountNo,
+          exe.isin,
+          exe.market,
+          exe.buySell,
+          exe.unitPrice,
+          exe.quantity,
+          exe.dateOfExecution,
+          valueDate = None,
+          userId = Some(userId)
+        )
+      }
+    )
