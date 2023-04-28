@@ -42,16 +42,18 @@ final case class TradingServiceLive(session: Session[Task], orderRepository: Ord
   private def trades(userId: UserId): ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] =
     ZPipeline.mapChunksZIO((inputs: Chunk[(Execution, AccountNo)]) =>
       ZIO.foreach(inputs) { case (exe, accountNo) =>
-        Trade.trade(
-          accountNo,
-          exe.isin,
-          exe.market,
-          exe.buySell,
-          exe.unitPrice,
-          exe.quantity,
-          exe.dateOfExecution,
-          valueDate = None,
-          userId = Some(userId)
-        )
+        Trade
+          .trade(
+            accountNo,
+            exe.isin,
+            exe.market,
+            exe.buySell,
+            exe.unitPrice,
+            exe.quantity,
+            exe.dateOfExecution,
+            valueDate = None,
+            userId = Some(userId)
+          )
+          .map(Trade.withTaxFee)
       }
     )

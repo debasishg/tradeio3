@@ -146,5 +146,9 @@ object trade:
       if (trade.taxFees.isEmpty && !trade.netAmount.isDefined)
         val taxFees = forTrade(trade).map(taxFeeCalculate(trade, _)).getOrElse(List.empty)
         val netAmt  = netAmount(trade, taxFees)
-        trade.modify(_.taxFees).setTo(taxFees).modify(_.netAmount.each).setTo(netAmt)
+        trade
+          .modify(_.taxFees)
+          .setTo(taxFees)
+          .modify(_.netAmount.each)
+          .setTo(netAmt)
       else trade
