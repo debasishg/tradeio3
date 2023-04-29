@@ -3,7 +3,12 @@ package service
 package live
 
 import java.time.LocalDate
-import zio.{ Chunk, Task, ZIO }
+import zio.{ Chunk, Task, ZIO, ZLayer }
+import zio.stream.{ ZPipeline, ZStream }
+import zio.interop.catz.*
+import zio.stream.interop.fs2z.*
+import skunk.Session
+
 import model.account.*
 import model.trade.*
 import model.execution.*
@@ -11,10 +16,7 @@ import model.order.*
 import model.user.*
 import repository.{ ExecutionRepository, OrderRepository }
 import repository.live.ExecutionRepositorySQL
-import skunk.Session
-import zio.stream.{ ZPipeline, ZStream }
-import zio.interop.catz.*
-import zio.stream.interop.fs2z.*
+import resources.AppResources
 
 final case class TradingServiceLive(session: Session[Task], orderRepository: OrderRepository) extends TradingService:
 
@@ -57,3 +59,11 @@ final case class TradingServiceLive(session: Session[Task], orderRepository: Ord
           .map(Trade.withTaxFee)
       }
     )
+
+object TradingServiceLive:
+  val layer =
+    ZLayer.scoped(for
+      orderRepository <- ZIO.service[OrderRepository]
+      appResources    <- ZIO.service[AppResources]
+      session         <- appResources.postgres.toScopedZIO
+    yield TradingServiceLive(session, orderRepository))
