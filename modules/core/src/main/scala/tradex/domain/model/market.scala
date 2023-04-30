@@ -1,8 +1,6 @@
 package tradex.domain
 package model
 
-import io.circe.{ Decoder, Encoder }
-
 object market:
 
   enum Market(val entryName: NonEmptyString):
