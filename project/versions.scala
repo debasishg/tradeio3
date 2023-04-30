@@ -14,4 +14,5 @@ object Versions {
   val zioConfigVersion = "4.0.0-RC13"
   val zioLoggingVersion = "2.1.11"
   val quickLensVersion = "1.9.2"
+  val zioJsonVersion = "0.5.0"
 }

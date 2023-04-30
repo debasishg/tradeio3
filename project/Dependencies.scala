@@ -15,6 +15,7 @@ object Dependencies {
     val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
     val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
     val zioLogging        = "dev.zio" %% "zio-logging-slf4j"   % zioLoggingVersion
+    val zioJson           = "dev.zio" %% "zio-json"            % zioJsonVersion
   }
   object Cats {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -29,14 +30,26 @@ object Dependencies {
     val skunkCore  = "org.tpolecat" %% "skunk-core"  % skunkVersion
     val skunkCirce = "org.tpolecat" %% "skunk-circe" % skunkVersion
   }
-  val squants = "org.typelevel" %% "squants"  % squantsVersion
-  val monocleCore = "dev.optics"      %% "monocle-core" % monocleVersion
+  val squants = "org.typelevel"     %% "squants"      % squantsVersion
+  val monocleCore = "dev.optics"    %% "monocle-core" % monocleVersion
   val quickLens = "com.softwaremill.quicklens" %% "quicklens" % quickLensVersion
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
 
-  val commonDependencies: Seq[ModuleID] = Seq(Cats.cats, Cats.catsEffect, Zio.zio, Zio.zioPrelude, Zio.zioInteropCats, Zio.zioConfig, Zio.zioConfigMagnolia, Zio.zioConfigTypesafe, Zio.zioLogging, quickLens)
+  val commonDependencies: Seq[ModuleID] = 
+    Seq(Cats.cats, 
+      Cats.catsEffect, 
+      Zio.zio, 
+      Zio.zioPrelude, 
+      Zio.zioInteropCats, 
+      Zio.zioConfig, 
+      Zio.zioConfigMagnolia, 
+      Zio.zioConfigTypesafe, 
+      Zio.zioLogging, 
+      Zio.zioJson, 
+      quickLens
+    )
 
   val tradeioDependencies: Seq[ModuleID] = 
     commonDependencies ++ Seq(squants) ++

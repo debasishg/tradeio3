@@ -4,6 +4,7 @@ import zio.prelude.NonEmptyList
 import io.circe.{ Decoder, Encoder }
 import squants.market.{ Currency, Money, USD }
 import java.util.UUID
+import zio.json._
 
 package object model extends OrphanInstances
 
@@ -29,3 +30,9 @@ trait OrphanInstances:
 
   given Encoder[UUID] =
     Encoder[String].contramap(_.toString())
+
+  given JsonDecoder[Currency] =
+    JsonDecoder[String].map(Currency.apply(_).get)
+
+  given JsonEncoder[Currency] =
+    JsonEncoder[String].contramap(_.toString)

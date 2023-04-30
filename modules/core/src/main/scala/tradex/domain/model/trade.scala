@@ -2,8 +2,6 @@ package tradex.domain
 package model
 
 import zio.prelude.*
-import io.circe.{ Decoder, Encoder }
-import io.circe.generic.semiauto.*
 import market.*
 import account.*
 import instrument.*
@@ -17,10 +15,7 @@ import java.util.UUID
 
 object trade:
   object TradeRefNo extends Newtype[UUID]:
-    given Decoder[TradeRefNo] = Decoder[UUID].emap(TradeRefNo.make(_).toEither.leftMap(_.head))
-    given Encoder[TradeRefNo] = Encoder[UUID].contramap(TradeRefNo.unwrap(_))
-    implicit val TradeRefNoEqual: Equal[TradeRefNo] =
-      Equal.default
+    given Equal[TradeRefNo] = Equal.default
 
   type TradeRefNo = TradeRefNo.Type
 
@@ -29,13 +24,6 @@ object trade:
     case Commission extends TaxFeeId(NonEmptyString("Commission"))
     case VAT extends TaxFeeId(NonEmptyString("VAT"))
     case Surcharge extends TaxFeeId(NonEmptyString("Surcharge"))
-
-  object TaxFeeId:
-    implicit val taxFeeIdEncoder: Encoder[TaxFeeId] =
-      Encoder[String].contramap(_.entryName)
-
-    implicit val taxFeeIdDecoder: Decoder[TaxFeeId] =
-      Decoder[String].map(TaxFeeId.valueOf(_))
 
   import TaxFeeId.*
 
@@ -99,13 +87,7 @@ object trade:
       amount: Money
   )
 
-  object TradeTaxFee:
-    given Decoder[TradeTaxFee] = deriveDecoder[TradeTaxFee]
-    given Encoder[TradeTaxFee] = deriveEncoder[TradeTaxFee]
-
   object Trade:
-    given Decoder[Trade] = deriveDecoder[Trade]
-    given Encoder[Trade] = deriveEncoder[Trade]
 
     def trade(
         accountNo: AccountNo,

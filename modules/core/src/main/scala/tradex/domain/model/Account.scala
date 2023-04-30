@@ -3,8 +3,6 @@ package model
 
 import squants.market.*
 import zio.prelude.{ Equal, Newtype, Validation }
-import io.circe.{ Decoder, Encoder }
-import io.circe.generic.semiauto.*
 import cats.implicits.catsSyntaxEither
 import java.time.LocalDateTime
 
@@ -37,7 +35,7 @@ object account:
     val dateOfClose  = base.dateOfClose
     val baseCurrency = base.baseCurrency
 
-  final case class TradingAccount private (
+  final case class TradingAccount(
       private[account] val base: AccountBase,
       accountType: Trading
   ) extends Account[Trading]:
@@ -65,10 +63,7 @@ object account:
   type ClientAccount = TradingAccount | SettlementAccount | TradingAndSettlementAccount
 
   object AccountNo extends Newtype[String]:
-    given Decoder[AccountNo] = Decoder[String].emap(AccountNo.make(_).toEither.leftMap(_.head))
-    given Encoder[AccountNo] = Encoder[String].contramap(AccountNo.unwrap(_))
-    implicit val AccountNoEqual: Equal[AccountNo] =
-      Equal.default
+    given Equal[AccountNo] = Equal.default
 
   type AccountNo = AccountNo.Type
   extension (ano: AccountNo)
@@ -77,9 +72,7 @@ object account:
         Validation.fail(s"AccountNo cannot be more than 12 characters or less than 5 characters long")
       else Validation.succeed(ano)
 
-  object AccountName extends Newtype[String]:
-    given Decoder[AccountName] = Decoder[String].emap(AccountName.make(_).toEither.leftMap(_.head))
-    given Encoder[AccountName] = Encoder[String].contramap(AccountName.unwrap(_))
+  object AccountName extends Newtype[String]
 
   type AccountName = AccountName.Type
   extension (aname: AccountName)
@@ -89,8 +82,6 @@ object account:
       else Validation.succeed(aname)
 
   object TradingAccount:
-    // given Decoder[TradingAccount] = deriveDecoder[TradingAccount]
-    // given Encoder[TradingAccount] = deriveEncoder[TradingAccount]
 
     def tradingAccount(
         no: AccountNo,
@@ -113,6 +104,7 @@ object account:
       }
 
   object SettlementAccount:
+
     def settlementAccount(
         no: AccountNo,
         name: AccountName,
@@ -134,7 +126,8 @@ object account:
       }
 
   object TradingAndSettlementAccount:
-    private abstract class Both() extends Trading, Settlement
+    abstract case class Both() extends Trading, Settlement
+
     def tradingAndSettlementAccount(
         no: AccountNo,
         name: AccountName,

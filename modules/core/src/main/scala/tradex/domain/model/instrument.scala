@@ -3,8 +3,6 @@ package model
 
 import zio.prelude.*
 import zio.prelude.Assertion.*
-import io.circe.{ Decoder, Encoder }
-import io.circe.generic.semiauto.*
 import cats.syntax.all.*
 import java.time.LocalDateTime
 import squants.market.Money
@@ -14,19 +12,13 @@ object instrument {
   object ISINCode extends Newtype[String]:
     override inline def assertion: Assertion[String] = hasLength(equalTo(12)) &&
       matches("([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})")
-    given Decoder[ISINCode] = Decoder[String].emap(ISINCode.make(_).toEither.leftMap(_.head))
-    given Encoder[ISINCode] = Encoder[String].contramap(ISINCode.unwrap(_))
 
   type ISINCode = ISINCode.Type
 
   case class InstrumentName(value: NonEmptyString)
-  given Decoder[InstrumentName] = deriveDecoder[InstrumentName]
-  given Encoder[InstrumentName] = deriveEncoder[InstrumentName]
 
   object LotSize extends Subtype[Int]:
     override inline def assertion: Assertion[Int] = greaterThan(0)
-    given Decoder[LotSize]                        = Decoder[Int].emap(LotSize.make(_).toEither.leftMap(_.head))
-    given Encoder[LotSize]                        = Encoder[Int].contramap(LotSize.unwrap(_))
 
   type LotSize = LotSize.Type
 
@@ -35,30 +27,13 @@ object instrument {
     case Equity extends InstrumentType(NonEmptyString("equity"))
     case FixedIncome extends InstrumentType(NonEmptyString("fixed income"))
 
-  object InstrumentType:
-    given Encoder[InstrumentType] =
-      Encoder[String].contramap(_.entryName)
-
-    given Decoder[InstrumentType] =
-      Decoder[String].map(InstrumentType.valueOf(_))
-
-  object UnitPrice extends Subtype[BigDecimal] {
+  object UnitPrice extends Subtype[BigDecimal]:
     override inline def assertion = Assertion.greaterThan(BigDecimal(0))
-    given Decoder[UnitPrice]      = Decoder[BigDecimal].emap(UnitPrice.make(_).toEither.leftMap(_.head))
-    given Encoder[UnitPrice]      = Encoder[BigDecimal].contramap(UnitPrice.unwrap(_))
-  }
   type UnitPrice = UnitPrice.Type
 
   enum CouponFrequency(val entryName: NonEmptyString):
     case Annual extends CouponFrequency(NonEmptyString("annual"))
     case SemiAnnual extends CouponFrequency(NonEmptyString("semi-annual"))
-
-  object CouponFrequency:
-    given Encoder[CouponFrequency] =
-      Encoder[String].contramap(_.entryName)
-
-    given Decoder[CouponFrequency] =
-      Decoder[String].map(CouponFrequency.valueOf(_))
 
   final case class InstrumentBase(
       isinCode: ISINCode,
@@ -74,7 +49,7 @@ object instrument {
     val lotSize  = base.lotSize
 
   final case class Ccy(
-      private[instrument] base: InstrumentBase
+      private[instrument] val base: InstrumentBase
   ) extends Instrument:
     val instrumentType = InstrumentType.CCY
 
@@ -85,7 +60,7 @@ object instrument {
       )
 
   final case class Equity(
-      private[instrument] base: InstrumentBase,
+      private[instrument] val base: InstrumentBase,
       dateOfIssue: LocalDateTime,
       unitPrice: UnitPrice
   ) extends Instrument:
@@ -100,7 +75,7 @@ object instrument {
       )
 
   final case class FixedIncome(
-      private[instrument] base: InstrumentBase,
+      private[instrument] val base: InstrumentBase,
       dateOfIssue: LocalDateTime,
       dateOfMaturity: Option[LocalDateTime],
       couponRate: Money,

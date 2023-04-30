@@ -11,10 +11,3 @@ object market:
     case Singapore extends Market(NonEmptyString("Singapore"))
     case HongKong extends Market(NonEmptyString("Hong Kong"))
     case Other extends Market(NonEmptyString("Other"))
-
-  object Market:
-    implicit val marketEncoder: Encoder[Market] =
-      Encoder[String].contramap(_.entryName)
-
-    implicit val marketDecoder: Decoder[Market] =
-      Decoder[String].map(Market.valueOf(_))
