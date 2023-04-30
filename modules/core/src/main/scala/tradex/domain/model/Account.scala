@@ -19,7 +19,7 @@ object account:
 
   sealed trait AccountType
 
-  sealed trait Trading extends AccountType:
+  trait Trading extends AccountType:
     def tradingCurrency: Currency
 
   sealed trait Settlement extends AccountType:
@@ -36,7 +36,7 @@ object account:
     val baseCurrency = base.baseCurrency
 
   final case class TradingAccount(
-      private[account] val base: AccountBase,
+      private[domain] val base: AccountBase,
       accountType: Trading
   ) extends Account[Trading]:
     val tradingCurrency = accountType.tradingCurrency
@@ -44,7 +44,7 @@ object account:
       close(base, closeDate).map(TradingAccount(_, accountType))
 
   final case class SettlementAccount private (
-      private[account] val base: AccountBase,
+      private[domain] val base: AccountBase,
       accountType: Settlement
   ) extends Account[Settlement]:
     val settlementCurrency = accountType.settlementCurrency
@@ -52,7 +52,7 @@ object account:
       close(base, closeDate).map(SettlementAccount(_, accountType))
 
   final case class TradingAndSettlementAccount private (
-      private[account] val base: AccountBase,
+      private[domain] val base: AccountBase,
       accountType: Trading & Settlement
   ) extends Account[Trading & Settlement]:
     val tradingCurrency    = accountType.tradingCurrency

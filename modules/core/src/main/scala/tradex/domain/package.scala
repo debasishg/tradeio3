@@ -1,12 +1,13 @@
 package tradex
 
 import zio.prelude._
-import zio.prelude.Assertion._
+import zio.prelude.Assertion.*
 import io.circe.{ Decoder, Encoder }
-import cats.syntax.all._
-import squants.market._
+import cats.syntax.all.*
+import squants.market.*
 import zio.config.magnolia.DeriveConfig
 import zio.Config.Secret
+import zio.json.*
 
 package object domain {
   given MoneyContext = defaultMoneyContext
@@ -21,4 +22,8 @@ package object domain {
   given Encoder[NonEmptyString] = Encoder[String].contramap(NonEmptyString.unwrap(_))
   given DeriveConfig[Secret] =
     DeriveConfig[String].map(Secret(_))
+  given JsonDecoder[Currency] =
+    JsonDecoder[String].map(Currency.apply(_).get)
+  given JsonEncoder[Currency] =
+    JsonEncoder[String].contramap(_.toString)
 }
