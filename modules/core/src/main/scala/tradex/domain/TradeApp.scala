@@ -19,7 +19,7 @@ object TradeApp extends ZIOAppDefault:
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
     val setupDB = for {
       dbConf <- ZIO.serviceWith[AppConfig](_.postgreSQL)
-      _      <- FlywayMigration.migrate(dbConf)
+      // _      <- FlywayMigration.migrate(dbConf)
     } yield ()
 
     given Console[Task] = Console.make[Task]
@@ -45,7 +45,8 @@ object TradeApp extends ZIOAppDefault:
       now     <- zio.Clock.instant
       uuid    <- zio.Random.nextUUID
       trades  <- service.generateTrades(LocalDate.ofInstant(now, ZoneOffset.UTC), UserId(uuid)).runCollect
-    yield trades
+      _       <- ZIO.logInfo(s"Done generating ${trades.size} trades")
+    yield ()
 
     setupDB.provide(config.appConfig)
       *> genTrades.provide(live)

@@ -39,7 +39,7 @@ object AppResources {
           host = c.host,
           port = c.port,
           user = c.user,
-          password = Some(c.password.toString()),
+          password = Some(c.password),
           database = c.database,
           max = c.max,
           strategy = Typer.Strategy.SearchPath

@@ -12,7 +12,7 @@ object config:
         host: NonEmptyString,
         port: Int,
         user: NonEmptyString,
-        password: Secret,
+        password: NonEmptyString, // @todo : need to change to Secret
         database: NonEmptyString,
         max: Int
     )
