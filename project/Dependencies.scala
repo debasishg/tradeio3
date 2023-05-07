@@ -34,6 +34,10 @@ object Dependencies {
   val monocleCore = "dev.optics"    %% "monocle-core" % monocleVersion
   val quickLens = "com.softwaremill.quicklens" %% "quicklens" % quickLensVersion
   val flywayDb = "org.flywaydb"      % "flyway-core" % flywayDbVersion
+  val kantanCSV = "com.nrinaudo"     % "kantan.csv_2.13" % kantanCsvVersion
+  val kantanCSVDateTime = "com.nrinaudo"     % "kantan.csv-java8_2.13" % kantanCsvVersion
+
+
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
@@ -49,7 +53,9 @@ object Dependencies {
       Zio.zioConfigTypesafe, 
       Zio.zioLogging, 
       Zio.zioJson, 
-      quickLens
+      quickLens,
+      kantanCSV,
+      kantanCSVDateTime
     )
 
   val tradeioDependencies: Seq[ModuleID] = 

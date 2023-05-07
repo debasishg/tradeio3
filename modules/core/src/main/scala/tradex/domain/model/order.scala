@@ -28,6 +28,16 @@ object order {
     case Buy extends BuySell(NonEmptyString("buy"))
     case Sell extends BuySell(NonEmptyString("sell"))
 
+  object BuySell:
+
+    def withValue(value: String): Validation[String, BuySell] =
+      value match
+        case "buy"  => Validation.succeed(Buy)
+        case "sell" => Validation.succeed(Sell)
+        case _      => Validation.fail("Error in value")
+
+  end BuySell
+
   final case class LineItem private (
       orderNo: OrderNo,
       isin: ISINCode,

@@ -16,4 +16,5 @@ object Versions {
   val quickLensVersion = "1.9.2"
   val zioJsonVersion = "0.5.0"
   val flywayDbVersion = "9.1.6"
+  val kantanCsvVersion = "0.7.0"
 }
