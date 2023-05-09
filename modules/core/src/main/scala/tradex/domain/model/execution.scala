@@ -17,7 +17,7 @@ object execution {
 
   type ExecutionRefNo = ExecutionRefNo.Type
 
-  final case class Execution private (
+  final case class Execution private[domain] (
       executionRefNo: ExecutionRefNo,
       accountNo: AccountNo,
       orderNo: OrderNo,

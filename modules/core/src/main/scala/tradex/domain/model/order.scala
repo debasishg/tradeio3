@@ -1,10 +1,10 @@
 package tradex.domain
 package model
 
-import zio.prelude._
+import zio.prelude.*
 
-import instrument._
-import account._
+import instrument.*
+import account.*
 import java.time.LocalDateTime
 
 object order {

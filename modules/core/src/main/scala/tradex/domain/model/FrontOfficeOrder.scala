@@ -17,6 +17,3 @@ object frontOfficeOrder:
       unitPrice: UnitPrice,
       buySell: BuySell
   )
-
-  object FrontOfficeOrder:
-    def toOrders(foOrders: NonEmptyList[FrontOfficeOrder]): NonEmptyList[Order] = ???

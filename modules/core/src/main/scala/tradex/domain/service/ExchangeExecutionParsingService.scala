@@ -4,5 +4,5 @@ package service
 import zio.Task
 import java.io.Reader
 
-trait FrontOfficeOrderParsingService:
+trait ExchangeExecutionParsingService:
   def parse(data: Reader): Task[Unit]
