@@ -36,9 +36,9 @@ object TradeApp extends ZIOAppDefault:
     val live: ZLayer[
       Any,
       Throwable,
-      TradingService with FrontOfficeOrderParsingService with ExchangeExecutionParsingService
+      TradingService & FrontOfficeOrderParsingService & ExchangeExecutionParsingService
     ] = ZLayer
-      .make[TradingService with FrontOfficeOrderParsingService with ExchangeExecutionParsingService](
+      .make[TradingService & FrontOfficeOrderParsingService & ExchangeExecutionParsingService](
         TradingServiceLive.layer,
         OrderRepositoryLive.layer,
         ExecutionRepositoryLive.layer,
@@ -67,9 +67,9 @@ object TradeApp extends ZIOAppDefault:
       _       <- ZIO.logInfo(s"Done generating ${trades.size} trades")
     yield ()
 
-    val tradingCycle = (reader("order.csv") <*> reader("execution.csv")).flatMap { case (order, execution) =>
+    val tradingCycle = (reader("order.csv") <&> reader("execution.csv")).flatMap { case (order, execution) =>
       (ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(order)) <&>
-        ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(execution))).map(_ => genTrades)
+        ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(execution))).flatMap(_ => genTrades)
     }
 
     setupDB.provide(config.appConfig)
