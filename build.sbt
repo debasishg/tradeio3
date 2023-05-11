@@ -20,6 +20,27 @@ lazy val core = (project in file("modules/core")).settings(
   dependencies
 )
 
+lazy val tests = (project in file("modules/tests"))
+  .settings(commonSettings: _*)
+  .configs(IntegrationTest)
+  .settings(
+    name           := "tradeioz2-test-suite",
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    testDependencies
+  )
+  .dependsOn(core)
+
+lazy val it = (project in file("modules/it"))
+  .settings(commonSettings: _*)
+  .configs(IntegrationTest)
+  .settings(
+    name           := "tradeioz2-it-suite",
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    Defaults.itSettings,
+    itDependencies
+  )
+  .dependsOn(core % "it->test")
+
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
   scalacOptions ++= List("-Wconf:cat=unused:info"),
@@ -53,3 +74,9 @@ lazy val compilerOptions = {
 
 lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
+
+lazy val testDependencies =
+  libraryDependencies ++= Dependencies.testDependencies
+
+lazy val itDependencies =
+  libraryDependencies ++= Dependencies.testDependencies

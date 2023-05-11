@@ -16,6 +16,8 @@ object Dependencies {
     val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
     val zioLogging        = "dev.zio" %% "zio-logging-slf4j"   % zioLoggingVersion
     val zioJson           = "dev.zio" %% "zio-json"            % zioJsonVersion
+    val zioTest           = "dev.zio" %% "zio-test"            % zioVersion % "it,test"
+    val zioTestSbt        = "dev.zio" %% "zio-test-sbt"        % zioVersion % "it,test"
   }
   object Cats {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -62,4 +64,7 @@ object Dependencies {
     commonDependencies ++ Seq(squants) ++ Seq(flywayDb) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser) ++ Seq(monocleCore) ++
       Seq(Skunk.skunkCore, Skunk.skunkCirce)
+
+  val testDependencies: Seq[ModuleID] =
+    Seq(Zio.zioTest, Zio.zioTestSbt)
 }
