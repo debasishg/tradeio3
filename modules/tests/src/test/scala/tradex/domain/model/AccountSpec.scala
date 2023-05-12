@@ -1,8 +1,8 @@
 package tradex.domain
 package model
 
-import zio.test._
-import zio.test.Assertion._
+import zio.test.*
+import zio.test.Assertion.*
 import squants.market.*
 import account._
 

@@ -2,13 +2,22 @@ package tradex.domain
 package csv
 
 import java.io.Reader
-import zio.ZIO
-import zio.stream.ZStream
-import kantan.csv.{ CsvConfiguration, ReadError, RowDecoder }
+import zio.{ Chunk, ZIO }
+import zio.stream.{ ZPipeline, ZStream }
+import kantan.csv.{ CsvConfiguration, HeaderEncoder, ReadError, RowDecoder, rfc }
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops.*
+import java.nio.charset.CharacterCodingException
+import kantan.csv.HeaderEncoder
 
 object CSV:
+  def encode[A: HeaderEncoder]: ZPipeline[Any, CharacterCodingException, A, Byte] =
+    ZPipeline.suspend {
+      ZPipeline.mapChunks((in: Chunk[A]) => Chunk.single(in.asCsv(rfc.withHeader).trim)) >>>
+        ZPipeline.intersperse("\r\n") >>>
+        ZPipeline.utf8Encode
+    }
+
   def decode[A: RowDecoder](reader: Reader, conf: CsvConfiguration)(using
       ReaderEngine
   ): ZStream[Any, Throwable, A] =
