@@ -10,11 +10,14 @@ import model.instrument.{ ISINCode, UnitPrice }
 import model.order.{ BuySell, Quantity }
 import tradex.domain.model.order.OrderNo
 import tradex.domain.model.market.Market
+import kantan.csv.CellEncoder
 
-object cellDecoders {
+object cellCodecs {
   given CellDecoder[AccountNo] = CellDecoder.from[AccountNo](v =>
     AccountNo(v).validateNo.toEitherAssociative.leftMap(err => DecodeError.TypeError(argOrEmpty("account no", v, err)))
   )
+
+  given CellEncoder[AccountNo] = CellEncoder.from(AccountNo.unwrap(_))
 
   given CellDecoder[OrderNo] = CellDecoder.from[OrderNo](v =>
     OrderNo(v).validateNo.toEitherAssociative.leftMap(err => DecodeError.TypeError(argOrEmpty("order no", v, err)))
@@ -27,12 +30,16 @@ object cellDecoders {
       .leftMap(err => DecodeError.TypeError(argOrEmpty("isin code", v, err)))
   )
 
+  given CellEncoder[ISINCode] = CellEncoder.from(ISINCode.unwrap(_))
+
   given CellDecoder[UnitPrice] = CellDecoder.from[UnitPrice](v =>
     UnitPrice
       .make(BigDecimal(v))
       .toEitherAssociative
       .leftMap(err => DecodeError.TypeError(argOrEmpty("unit price", v, err)))
   )
+
+  given CellEncoder[UnitPrice] = CellEncoder.from(_.toString)
 
   given CellDecoder[Quantity] = CellDecoder.from[Quantity](v =>
     Quantity
@@ -41,12 +48,16 @@ object cellDecoders {
       .leftMap(err => DecodeError.TypeError(argOrEmpty("quantity", v, err)))
   )
 
+  given CellEncoder[Quantity] = CellEncoder.from(_.toString)
+
   given CellDecoder[BuySell] = CellDecoder.from[BuySell](v =>
     BuySell
       .withValue(v)
       .toEitherAssociative
       .leftMap(err => DecodeError.TypeError(argOrEmpty("buy sell", v, err)))
   )
+
+  given CellEncoder[BuySell] = CellEncoder.from(_.entryName)
 
   given CellDecoder[Market] = CellDecoder.from[Market](v =>
     Market

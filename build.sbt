@@ -11,7 +11,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "tradeio3"
   )
-  .aggregate(core)
+  .aggregate(core, tests, it)
 
 lazy val core = (project in file("modules/core")).settings(
   name := "tradeio-core",
@@ -24,7 +24,7 @@ lazy val tests = (project in file("modules/tests"))
   .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
-    name           := "tradeioz2-test-suite",
+    name           := "tradeio3-test-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     testDependencies
   )
@@ -34,7 +34,7 @@ lazy val it = (project in file("modules/it"))
   .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
-    name           := "tradeioz2-it-suite",
+    name           := "tradeio3-it-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     Defaults.itSettings,
     itDependencies
@@ -43,7 +43,6 @@ lazy val it = (project in file("modules/it"))
 
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
-  scalacOptions ++= List("-Wconf:cat=unused:info"),
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
 

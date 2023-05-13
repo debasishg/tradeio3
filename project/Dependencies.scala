@@ -7,17 +7,19 @@ object Dependencies {
 
 
   object Zio {
-    val zio               = "dev.zio" %% "zio"                 % zioVersion
-    val zioStreams        = "dev.zio" %% "zio-streams"         % zioVersion
-    val zioPrelude        = "dev.zio" %% "zio-prelude"         % zioPreludeVersion
-    val zioInteropCats    = "dev.zio" %% "zio-interop-cats"    % zioInteropCatsVersion
-    val zioConfig         = "dev.zio" %% "zio-config"          % zioConfigVersion
-    val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
-    val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
-    val zioLogging        = "dev.zio" %% "zio-logging-slf4j"   % zioLoggingVersion
-    val zioJson           = "dev.zio" %% "zio-json"            % zioJsonVersion
-    val zioTest           = "dev.zio" %% "zio-test"            % zioVersion % "it,test"
-    val zioTestSbt        = "dev.zio" %% "zio-test-sbt"        % zioVersion % "it,test"
+    val zio                    = "dev.zio" %% "zio"                 % zioVersion
+    val zioStreams             = "dev.zio" %% "zio-streams"         % zioVersion
+    val zioPrelude             = "dev.zio" %% "zio-prelude"         % zioPreludeVersion
+    val zioInteropCats         = "dev.zio" %% "zio-interop-cats"    % zioInteropCatsVersion
+    val zioConfig              = "dev.zio" %% "zio-config"          % zioConfigVersion
+    val zioConfigTypesafe      = "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
+    val zioConfigMagnolia      = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
+    val zioLogging             = "dev.zio" %% "zio-logging-slf4j"   % zioLoggingVersion
+    val zioLoggingSlf4j        = "dev.zio" %% "zio-logging-slf4j"   % zioLoggingVersion
+    val zioLoggingSlf4jBridge  = "dev.zio" %% "zio-logging-slf4j-bridge" % zioLoggingVersion
+    val zioJson                = "dev.zio" %% "zio-json"            % zioJsonVersion
+    val zioTest                = "dev.zio" %% "zio-test"            % zioVersion % "it,test"
+    val zioTestSbt             = "dev.zio" %% "zio-test-sbt"        % zioVersion % "it,test"
   }
   object Cats {
     val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -54,6 +56,8 @@ object Dependencies {
       Zio.zioConfigMagnolia, 
       Zio.zioConfigTypesafe, 
       Zio.zioLogging, 
+      Zio.zioLoggingSlf4j,
+      Zio.zioLoggingSlf4jBridge,
       Zio.zioJson, 
       quickLens,
       kantanCSV,
