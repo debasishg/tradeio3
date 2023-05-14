@@ -25,3 +25,5 @@ trait OrderRepository:
   def streamOrders(
       executionDate: LocalDate
   ): ZStream[Any, Throwable, Order] = ???
+
+  def cleanAllOrders: Task[Unit]

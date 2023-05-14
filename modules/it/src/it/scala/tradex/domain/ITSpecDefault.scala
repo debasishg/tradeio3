@@ -7,7 +7,7 @@ import tradex.domain.Fixture.appResourcesL
 
 abstract class ITSpecDefault extends ZIOSpecDefault:
 
-  override val bootstrap: ZLayer[Any, Any, Environment with TestEnvironment] = 
+  override val bootstrap: ZLayer[Any, Any, Environment with TestEnvironment] =
     val nullLogger = zio.logging.removeDefaultLoggers >>> Slf4jBridge.initialize
     testEnvironment >+> nullLogger
 

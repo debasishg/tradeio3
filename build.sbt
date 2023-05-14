@@ -5,7 +5,7 @@ ThisBuild / organizationName := "tradex"
 
 ThisBuild / evictionErrorLevel := Level.Warn
 
-resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 
 lazy val root = (project in file("."))
   .settings(
@@ -36,6 +36,7 @@ lazy val it = (project in file("modules/it"))
   .settings(
     name           := "tradeio3-it-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    scalafmtOnCompile := true,
     Defaults.itSettings,
     itDependencies
   )
@@ -43,7 +44,7 @@ lazy val it = (project in file("modules/it"))
 
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
-  resolvers += Resolver.sonatypeRepo("snapshots")
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 )
 
 lazy val consoleSettings = Seq(

@@ -77,18 +77,23 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
 
   override def queryByOrderDate(date: LocalDate): Task[List[Order]] =
     postgres.use { session =>
-      session.prepare(selectByOrderDate).flatMap { ps =>
-        ps.stream(date, 1024)
-          .compile
-          .toList
-          .map(_.groupBy(_.no))
-          .map { m =>
-            m.map { case (_, lis) =>
-              lis.reduce(Associative[Order].combine(_, _))
-            }.toList
-          }
-      }
+      session
+        .prepare(selectByOrderDate)
+        .flatMap(ps =>
+          ps.stream(date, 1024)
+            .compile
+            .toList
+            .map(_.groupBy(_.no))
+            .map { m =>
+              m.map { case (_, lis) =>
+                lis.reduce(Associative[Order].combine(_, _))
+              }.toList
+            }
+        )
     }
+
+  override def cleanAllOrders: Task[Unit] =
+    postgres.use(session => session.execute(deleteAllLineItems).unit *> session.execute(deleteAllOrders).unit)
 
 private object OrderRepositorySQL:
 
@@ -151,6 +156,12 @@ private object OrderRepositorySQL:
 
   val deleteLineItems: Command[String] =
     sql"DELETE FROM lineItems WHERE orderNo = $varchar".command
+
+  val deleteAllLineItems: Command[Void] =
+    sql"DELETE FROM lineItems".command
+
+  val deleteAllOrders: Command[Void] =
+    sql"DELETE FROM orders".command
 
 object OrderRepositoryLive:
   val layer = ZLayer.fromFunction(OrderRepositoryLive.apply _)
