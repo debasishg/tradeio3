@@ -41,8 +41,9 @@ final case class FrontOfficeOrderParsingServiceLive(
   private def makeOrderNo(accountNo: String, date: Instant): String = s"$accountNo-${date.hashCode}"
 
   private def makeOrder(ano: AccountNo, fos: NonEmptyChunk[FrontOfficeOrder]): UIO[Order] =
-    Clock.instant.flatMap { now =>
-      val ono = makeOrderNo(AccountNo.unwrap(ano), now)
+    Clock.instant.map(_.atOffset(ZoneOffset.UTC)).flatMap { now =>
+      val n   = Instant.now()
+      val ono = makeOrderNo(AccountNo.unwrap(ano), n)
       val lineItems = fos.map { fo =>
         LineItem.make(
           OrderNo(ono),
@@ -56,7 +57,7 @@ final case class FrontOfficeOrderParsingServiceLive(
         Order.make(
           OrderNo(ono),
           LocalDateTime
-            .ofInstant(now, ZoneOffset.UTC),
+            .ofInstant(n, ZoneOffset.UTC),
           ano,
           NonEmptyList(lineItems.head, lineItems.tail.toList: _*)
         )

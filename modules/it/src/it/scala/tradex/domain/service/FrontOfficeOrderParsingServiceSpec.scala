@@ -13,10 +13,15 @@ import service.live.FrontOfficeOrderParsingServiceLive
 import repository.live.OrderRepositoryLive
 import Fixture.appResourcesL
 import service.generators.frontOfficeOrderGen
+import tradex.domain.repository.OrderRepository
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 object FrontOfficeOrderParsingServiceSpec extends ZIOSpecDefault:
+  val now = Instant.now
   override def spec: Spec[TestEnvironment & Scope, Any] = suite("FrontOfficeOrderParsingServiceSpec")(
-    test("parse order")(check(Gen.listOfN(10)(frontOfficeOrderGen)) { frontOfficeOrders =>
+    test("parse front office orders and create orders")(check(Gen.listOfN(10)(frontOfficeOrderGen(now))) { frontOfficeOrders =>
       for
         service <- ZIO.service[FrontOfficeOrderParsingService]
         reader <- ZStream
@@ -25,7 +30,8 @@ object FrontOfficeOrderParsingServiceSpec extends ZIOSpecDefault:
           .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
           .toReader
         _ <- service.parse(reader)
-      yield assertTrue(true)
+        inserted <- ZIO.serviceWithZIO[OrderRepository](_.queryByOrderDate(LocalDate.ofInstant(now, ZoneOffset.UTC)))
+      yield assertTrue(inserted.nonEmpty)
     }
   ))
   .provideSome[Scope](

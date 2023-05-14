@@ -40,9 +40,11 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
   private def storeOrderAndLineItems(
       ord: Order,
       session: Session[Task]
-  ): Task[Order] = {
+  ): Task[Order] =
     val lineItems = ord.items.toList
-    session.prepare(deleteLineItems).flatMap(_.execute(OrderNo.unwrap(ord.no))) *>
+    session
+      .prepare(deleteLineItems)
+      .flatMap(_.execute(OrderNo.unwrap(ord.no))) *>
       session
         .prepare(upsertOrder)
         .flatMap(
@@ -57,7 +59,6 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
         }
         .unit
         .map(_ => ord)
-  }
 
   override def query(no: OrderNo): Task[Option[Order]] =
     postgres.use { session =>

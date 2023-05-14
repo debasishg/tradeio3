@@ -79,7 +79,7 @@ object codecs:
     varchar.imap[InstrumentType](InstrumentType.valueOf(_))(_.entryName)
 
   val buySell: Codec[BuySell] =
-    varchar.imap[BuySell](BuySell.valueOf(_))(_.entryName)
+    varchar.eimap[BuySell](BuySell.withValue(_).toEitherAssociative.leftMap(identity))(_.entryName)
 
   val taxFeeId: Codec[TaxFeeId] =
     varchar.imap[TaxFeeId](TaxFeeId.valueOf(_))(_.entryName)

@@ -19,11 +19,12 @@ object generators:
   val nonEmptyStringGen: Gen[Random with Sized, String]  = Gen.alphaNumericStringBounded(21, 40)
   val accountNoStringGen: Gen[Random with Sized, String] = Gen.alphaNumericStringBounded(5, 12)
   val accountNoGen: Gen[Random with Sized, AccountNo] =
-    accountNoStringGen.map(str =>
+    val accs = List("ibm-123", "ibm-124", "nri-654").map ( str =>
       AccountNo(str)
         .validateNo
         .fold(errs => throw new Exception(errs.toString), identity)
     )
+    Gen.fromIterable(accs)
 
   def isinGen: Gen[Any, ISINCode] =
     val appleISINStr = "US0378331005"
@@ -60,12 +61,12 @@ object generators:
           .fold(err => throw new Exception(err), identity))
     Gen.fromIterable(qtys)
 
-  val frontOfficeOrderGen = for
+  def frontOfficeOrderGen(orderDate: Instant) = for
     ano  <- accountNoGen
-    dt   <- Gen.fromIterable(List(Instant.now, Instant.now.plus(2, java.time.temporal.ChronoUnit.DAYS)))
+    // dt   <- Gen.fromIterable(List(Instant.now, Instant.now.plus(2, java.time.temporal.ChronoUnit.DAYS)))
     isin <- isinGen
     qty  <- quantityGen
     up   <- unitPriceGen
     bs   <- Gen.fromIterable(BuySell.values)
-  yield FrontOfficeOrder(ano, dt, isin, qty, up, bs)
+  yield FrontOfficeOrder(ano, orderDate, isin, qty, up, bs)
 

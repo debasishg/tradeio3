@@ -15,8 +15,8 @@ object order {
 
   extension (ono: OrderNo)
     def validateNo: Validation[String, OrderNo] =
-      if (OrderNo.unwrap(ono).size > 12 || OrderNo.unwrap(ono).size < 5)
-        Validation.fail(s"OrderNo cannot be more than 12 characters or less than 5 characters long")
+      if (OrderNo.unwrap(ono).size > 50 || OrderNo.unwrap(ono).size < 5)
+        Validation.fail(s"OrderNo cannot be more than 50 characters or less than 5 characters long")
       else Validation.succeed(ono)
 
   object Quantity extends Subtype[BigDecimal]:

@@ -90,3 +90,78 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+insert into accounts
+values(
+  'ibm-123',
+  'IBM',
+  'Trading',
+  current_date,
+  null,
+  'USD',
+  'USD',
+  null
+);
+
+insert into accounts
+values(
+  'ibm-124',
+  'IBM',
+  'Trading',
+  current_date,
+  null,
+  'USD',
+  'USD',
+  null
+);
+
+insert into accounts
+values(
+  'nri-654',
+  'Nomura',
+  'Trading',
+  current_date,
+  null,
+  'USD',
+  'USD',
+  null
+);
+
+insert into instruments
+values (
+  'US0378331005',
+  'apple',
+  'equity',
+  '2019-08-25 19:10:25',
+  null,
+  100,
+  1200.50,
+  null,
+  null
+);
+
+insert into instruments
+values (
+  'GB0002634946',
+  'bae systems',
+  'equity',
+  '2018-08-25 19:10:25',
+  null,
+  100,
+  200.50,
+  null,
+  null
+);
+
+insert into instruments
+values (
+  'US4592001014',
+  'ibm',
+  'equity',
+  '2018-08-25 19:10:25',
+  null,
+  100,
+  500.50,
+  null,
+  null
+);
