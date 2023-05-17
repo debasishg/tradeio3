@@ -15,6 +15,12 @@ trait ExecutionRepository:
   /** store many executions */
   def store(executions: NonEmptyList[Execution]): Task[Unit]
 
+  /** query all executions for the day */
+  def query(dateOfExecution: LocalDate): Task[List[Execution]]
+
+  /** delete all executions */
+  def cleanAllExecutions: Task[Unit]
+
   /** stream all executions for the day for all orders group by orderNo */
   def streamExecutions(
       executionDate: LocalDate

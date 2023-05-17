@@ -6,17 +6,15 @@ import zio.test.Assertion.*
 import zio.{ Scope, ZIO }
 import zio.stream.{ ZPipeline, ZStream }
 import java.nio.charset.StandardCharsets
+import java.time.{ Instant, LocalDate, ZoneOffset }
 import csv.CSV
 import model.frontOfficeOrder.FrontOfficeOrder
 import transport.frontOfficeOrderT.{ given, * }
 import service.live.FrontOfficeOrderParsingServiceLive
+import generators.frontOfficeOrderGen
 import repository.live.OrderRepositoryLive
+import repository.OrderRepository
 import Fixture.appResourcesL
-import service.generators.frontOfficeOrderGen
-import tradex.domain.repository.OrderRepository
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 object FrontOfficeOrderParsingServiceSpec extends ZIOSpecDefault:
   val now = Instant.now

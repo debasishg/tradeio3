@@ -2,7 +2,7 @@ package tradex.domain
 package service
 package live
 
-import zio.{ Random, Task, UIO, ZIO }
+import zio.{ Random, Task, UIO, ZIO, ZLayer }
 import zio.stream.{ ZPipeline, ZStream }
 import zio.prelude.NonEmptyList
 import java.io.Reader
@@ -12,7 +12,6 @@ import model.exchangeExecution.*
 import model.execution.*
 import repository.ExecutionRepository
 import csv.CSV
-import zio.ZLayer
 
 final case class ExchangeExecutionParsingServiceLive(
     executionRepo: ExecutionRepository

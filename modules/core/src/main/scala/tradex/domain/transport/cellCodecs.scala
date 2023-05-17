@@ -22,6 +22,7 @@ object cellCodecs {
   given CellDecoder[OrderNo] = CellDecoder.from[OrderNo](v =>
     OrderNo(v).validateNo.toEitherAssociative.leftMap(err => DecodeError.TypeError(argOrEmpty("order no", v, err)))
   )
+  given CellEncoder[OrderNo] = CellEncoder.from(OrderNo.unwrap(_))
 
   given CellDecoder[ISINCode] = CellDecoder.from[ISINCode](v =>
     ISINCode
@@ -65,6 +66,8 @@ object cellCodecs {
       .toEitherAssociative
       .leftMap(err => DecodeError.TypeError(argOrEmpty("market", v, err)))
   )
+
+  given CellEncoder[Market] = CellEncoder.from(_.entryName)
 
   private def argOrEmpty(column: String, cell: String, error: String): String =
     if (cell.trim.isEmpty) s"Empty $column" else error

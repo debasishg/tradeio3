@@ -6,12 +6,12 @@ import kantan.csv.java8.*
 import model.frontOfficeOrder.FrontOfficeOrder
 import cellCodecs.{ given, * }
 import kantan.csv.HeaderCodec
-import tradex.domain.model.account.AccountNo
+import model.account.AccountNo
 import java.time.Instant
-import tradex.domain.model.instrument.ISINCode
-import tradex.domain.model.order.Quantity
-import tradex.domain.model.instrument.UnitPrice
-import tradex.domain.model.order.BuySell
+import model.instrument.ISINCode
+import model.order.Quantity
+import model.instrument.UnitPrice
+import model.order.BuySell
 
 object frontOfficeOrderT:
   given RowDecoder[FrontOfficeOrder] = RowDecoder.decoder(0, 1, 2, 3, 4, 5)(FrontOfficeOrder.apply)

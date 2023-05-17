@@ -33,6 +33,20 @@ final case class ExecutionRepositoryLive(postgres: Resource[Task, Session[Task]]
         .unit
     )
 
+  override def query(dateOfExecution: LocalDate): Task[List[Execution]] =
+    postgres.use(session =>
+      session
+        .prepare(selectByExecutionDate)
+        .flatMap(_.stream(dateOfExecution, 1024).compile.toList)
+    )
+
+  override def cleanAllExecutions: Task[Unit] =
+    postgres.use(session =>
+      session
+        .execute(deleteAllExecutions)
+        .unit
+    )
+
 private[domain] object ExecutionRepositorySQL:
   val executionEncoder: Encoder[Execution] =
     (executionRefNo ~ accountNo ~ orderNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ varchar.opt).values
@@ -76,6 +90,9 @@ private[domain] object ExecutionRepositorySQL:
         FROM executions AS e
         WHERE DATE(e.dateOfExecution) = $date
        """.query(executionDecoder)
+
+  val deleteAllExecutions: Command[Void] =
+    sql"DELETE FROM executions".command
 
 object ExecutionRepositoryLive:
   val layer = ZLayer.fromFunction(ExecutionRepositoryLive.apply _)
