@@ -19,8 +19,8 @@ import Fixture.appResourcesL
 object FrontOfficeOrderParsingServiceSpec extends ZIOSpecDefault:
   val now = Instant.now
   override def spec = suite("FrontOfficeOrderParsingServiceSpec")(
-    test("parse front office orders and create orders")(check(Gen.listOfN(10)(frontOfficeOrderGen(now))) {
-      frontOfficeOrders =>
+    test("parse front office orders and create orders")(
+      check(Gen.listOfN(10)(frontOfficeOrderGen(now)))(frontOfficeOrders =>
         for
           service <- ZIO.service[FrontOfficeOrderParsingService]
           reader <- ZStream
@@ -31,7 +31,8 @@ object FrontOfficeOrderParsingServiceSpec extends ZIOSpecDefault:
           _        <- service.parse(reader)
           inserted <- ZIO.serviceWithZIO[OrderRepository](_.queryByOrderDate(LocalDate.ofInstant(now, ZoneOffset.UTC)))
         yield assertTrue(inserted.nonEmpty)
-    }) @@ TestAspect.before(clean)
+      )
+    ) @@ TestAspect.before(clean)
   )
     .provideSome[Scope](
       FrontOfficeOrderParsingServiceLive.layer,

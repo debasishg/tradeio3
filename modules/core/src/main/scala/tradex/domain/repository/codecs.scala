@@ -73,7 +73,7 @@ object codecs:
     uuid.imap[TradeRefNo](TradeRefNo(_))(TradeRefNo.unwrap(_))
 
   val market: Codec[Market] =
-    varchar.imap[Market](Market.valueOf(_))(_.entryName)
+    varchar.eimap[Market](Market.withValue(_).toEitherAssociative.leftMap(identity))(_.entryName)
 
   val instrumentType: Codec[InstrumentType] =
     varchar.imap[InstrumentType](InstrumentType.valueOf(_))(_.entryName)
