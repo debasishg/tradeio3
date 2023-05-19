@@ -4,6 +4,7 @@ ThisBuild / organization := "dev.tradex"
 ThisBuild / organizationName := "tradex"
 
 ThisBuild / evictionErrorLevel := Level.Warn
+ThisBuild / IntegrationTest / parallelExecution := false
 
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 
