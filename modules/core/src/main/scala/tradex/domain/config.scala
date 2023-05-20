@@ -23,14 +23,8 @@ object config:
         zeroBalanceAllowed: Boolean
     )
 
-  type AllConfig = AppConfig with AppConfig.TradingConfig with AppConfig.PostgreSQLConfig
-
   final val Root = "tradex"
 
   private final val Descriptor = deriveConfig[AppConfig]
 
   val appConfig = ZLayer(TypesafeConfigProvider.fromResourcePath().nested(Root).load(Descriptor))
-
-  val live: TaskLayer[AllConfig] = appConfig >+>
-    appConfig.project(_.postgreSQL) >+>
-    appConfig.project(_.tradingConfig)
