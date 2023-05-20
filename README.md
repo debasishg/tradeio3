@@ -17,6 +17,6 @@ connect to database
 >\c trading;
 
 use database
->select * from orders;
+>select * from accounts;
 
 

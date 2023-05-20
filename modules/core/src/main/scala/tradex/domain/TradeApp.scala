@@ -60,16 +60,19 @@ object TradeApp extends ZIOAppDefault:
       )
 
     val genTrades = for
-      service <- ZIO.service[TradingService]
-      now     <- zio.Clock.instant
-      uuid    <- zio.Random.nextUUID
-      trades  <- service.generateTrades(LocalDate.ofInstant(now, ZoneOffset.UTC), UserId(uuid)).runCollect
-      _       <- ZIO.logInfo(s"Done generating ${trades.size} trades")
+      now  <- zio.Clock.instant
+      uuid <- zio.Random.nextUUID
+      trades <- ZIO
+        .serviceWithZIO[TradingService](
+          _.generateTrades(LocalDate.ofInstant(now, ZoneOffset.UTC), UserId(uuid)).runCollect
+        )
+      _ <- ZIO.logInfo(s"Done generating ${trades.size} trades")
     yield ()
 
     val tradingCycle = (reader("order.csv") <&> reader("execution.csv")).flatMap { case (order, execution) =>
-      (ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(order)) <&>
-        ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(execution))).flatMap(_ => genTrades)
+      ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(order)) *>
+        ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(execution)) *>
+        genTrades
     }
 
     setupDB.provide(config.appConfig)
