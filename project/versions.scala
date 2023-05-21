@@ -17,4 +17,6 @@ object Versions {
   val zioJsonVersion        = "0.5.0"
   val flywayDbVersion       = "9.1.6"
   val kantanCsvVersion      = "0.7.0"
+  val tapirVersion          = "1.3.0"
+
 }

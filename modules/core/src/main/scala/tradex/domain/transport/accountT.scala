@@ -82,4 +82,8 @@ object accountT {
     JsonEncoder[(AccountBase, String, Currency, Currency)].contramap { account =>
       (account.base, "Trading & Settlement", account.tradingCurrency, account.settlementCurrency)
     }
+
+  // union types don't work with zio-json
+  // given JsonCodec[ClientAccount] = DeriveJsonCodec.gen[ClientAccount]
+
 }

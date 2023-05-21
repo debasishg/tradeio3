@@ -33,6 +33,12 @@ object Dependencies {
     val skunkCore  = "org.tpolecat" %% "skunk-core"  % skunkVersion
     val skunkCirce = "org.tpolecat" %% "skunk-circe" % skunkVersion
   }
+
+  object Tapir {
+    val tapirZioHttpServer = "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % tapirVersion
+    val tapirJsonZio       = "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % tapirVersion
+    val tapirSwagger       = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion
+  }
   val squants           = "org.typelevel"              %% "squants"               % squantsVersion
   val monocleCore       = "dev.optics"                 %% "monocle-core"          % monocleVersion
   val quickLens         = "com.softwaremill.quicklens" %% "quicklens"             % quickLensVersion
@@ -65,7 +71,8 @@ object Dependencies {
   val tradeioDependencies: Seq[ModuleID] =
     commonDependencies ++ Seq(squants) ++ Seq(flywayDb) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser) ++ Seq(monocleCore) ++
-      Seq(Skunk.skunkCore, Skunk.skunkCirce)
+      Seq(Skunk.skunkCore, Skunk.skunkCirce) ++
+      Seq(Tapir.tapirZioHttpServer, Tapir.tapirJsonZio, Tapir.tapirSwagger)
 
   val testDependencies: Seq[ModuleID] =
     Seq(Zio.zioTest, Zio.zioTestSbt)

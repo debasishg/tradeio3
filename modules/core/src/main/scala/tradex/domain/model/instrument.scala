@@ -41,7 +41,7 @@ object instrument {
       lotSize: LotSize
   )
 
-  trait Instrument:
+  sealed trait Instrument:
     private[instrument] def base: InstrumentBase
     def instrumentType: InstrumentType
     val isinCode = base.isinCode
