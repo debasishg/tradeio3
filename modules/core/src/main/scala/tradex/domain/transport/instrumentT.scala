@@ -4,8 +4,12 @@ package transport
 import zio.json.*
 import cats.syntax.all.*
 import model.instrument.*
+import sttp.tapir.Schema
+import sttp.tapir.generic.auto.*
+import zio.config.magnolia.examples.P.S
+import sttp.tapir.SchemaType
 
-object instrumentT {
+object instrumentT:
   given JsonDecoder[ISINCode] =
     JsonDecoder[String].mapOrFail(ISINCode.make(_).toEither.leftMap(_.head))
   given JsonEncoder[ISINCode] = JsonEncoder[String].contramap(ISINCode.unwrap(_))
@@ -26,4 +30,15 @@ object instrumentT {
   given JsonCodec[Equity]          = DeriveJsonCodec.gen[Equity]
   given JsonCodec[FixedIncome]     = DeriveJsonCodec.gen[FixedIncome]
   given JsonCodec[Ccy]             = DeriveJsonCodec.gen[Ccy]
-}
+  given JsonCodec[Instrument]      = DeriveJsonCodec.gen[Instrument]
+
+  given Schema[ISINCode]        = Schema.string
+  given Schema[LotSize]         = Schema(SchemaType.SInteger())
+  given Schema[UnitPrice]       = Schema(SchemaType.SNumber())
+  given Schema[InstrumentName]  = Schema.derivedSchema
+  given Schema[CouponFrequency] = Schema.derivedSchema
+  given Schema[InstrumentBase]  = Schema.derivedSchema
+  given Schema[Equity]          = Schema.derivedSchema
+  given Schema[FixedIncome]     = Schema.derivedSchema
+  given Schema[Ccy]             = Schema.derivedSchema
+  given Schema[Instrument]      = Schema.derivedSchema

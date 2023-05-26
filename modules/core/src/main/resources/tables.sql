@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS instruments (
     lotSize integer,
     unitPrice decimal,
     couponRate decimal,
-    couponFrequency decimal
+    couponFrequency varchar
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -131,7 +131,7 @@ insert into instruments
 values (
   'US0378331005',
   'apple',
-  'equity',
+  'Equity',
   '2019-08-25 19:10:25',
   null,
   100,
@@ -144,7 +144,7 @@ insert into instruments
 values (
   'GB0002634946',
   'bae systems',
-  'equity',
+  'Equity',
   '2018-08-25 19:10:25',
   null,
   100,
@@ -157,7 +157,7 @@ insert into instruments
 values (
   'US4592001014',
   'ibm',
-  'equity',
+  'Equity',
   '2018-08-25 19:10:25',
   null,
   100,

@@ -8,6 +8,8 @@ import zio.config.magnolia.DeriveConfig
 import zio.Config.Secret
 import zio.json.*
 import java.util.UUID
+import sttp.tapir.Schema
+import sttp.tapir.SchemaType
 
 package object domain {
   given MoneyContext = defaultMoneyContext
@@ -20,6 +22,7 @@ package object domain {
   type NonEmptyString = NonEmptyString.Type
   given JsonDecoder[NonEmptyString] = JsonDecoder[String].mapOrFail(NonEmptyString.make(_).toEither.leftMap(_.head))
   given JsonEncoder[NonEmptyString] = JsonEncoder[String].contramap(NonEmptyString.unwrap(_))
+  given Schema[NonEmptyString]      = Schema.string
 
   given DeriveConfig[Secret] =
     DeriveConfig[String].map(Secret(_))
@@ -33,6 +36,7 @@ package object domain {
     JsonDecoder[BigDecimal].map(USD.apply)
   given JsonEncoder[Money] =
     JsonEncoder[BigDecimal].contramap(_.amount)
+  given Schema[Money] = Schema(SchemaType.SNumber())
 
   given nelDecoder[A: JsonDecoder]: JsonDecoder[NonEmptyList[A]] =
     JsonDecoder[List[A]].map(l => NonEmptyList.apply(l.head, l.tail: _*))
