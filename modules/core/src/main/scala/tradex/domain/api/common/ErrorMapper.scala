@@ -11,5 +11,5 @@ object ErrorMapper:
     case e: Exceptions.NotFound     => NotFound(e.message)
     case e: Exceptions.BadRequest   => BadRequest(e.message)
     case e: Exceptions.Unauthorized => Unauthorized(e.message)
-    case _                          => InternalServerError()
+    case e                          => InternalServerError(e.getMessage)
   }

@@ -26,11 +26,10 @@ final case class TradingServerEndpoints(
             .fold(err => throw new Exception(err), identity)
         )
         .pipe(r =>
-          defaultErrorsMappings(r)
-            .foldZIO(
-              err => ZIO.succeed(Left(err)),
-              maybeIns =>
-                maybeIns.map(ins => ZIO.succeed(Right(ins))).getOrElse(ZIO.fail(new Throwable("Instrument not found")))
+          defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found")))
+            .fold(
+              err => Left(err),
+              ins => Right(ins)
             )
         )
     }

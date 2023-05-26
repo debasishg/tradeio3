@@ -22,10 +22,10 @@ object instrument {
 
   type LotSize = LotSize.Type
 
-  enum InstrumentType(val entryName: NonEmptyString):
-    case CCY extends InstrumentType(NonEmptyString("ccy"))
-    case Equity extends InstrumentType(NonEmptyString("equity"))
-    case FixedIncome extends InstrumentType(NonEmptyString("fixed income"))
+  enum InstrumentType(val entryName: String):
+    case CCY extends InstrumentType("Ccy")
+    case Equity extends InstrumentType("Equity")
+    case FixedIncome extends InstrumentType("Fixed Income")
 
   object UnitPrice extends Subtype[BigDecimal]:
     override inline def assertion = Assertion.greaterThan(BigDecimal(0))

@@ -5,7 +5,11 @@ import zio.{ Config, TaskLayer, ZLayer }
 import zio.Config.Secret
 
 object config:
-  final case class AppConfig(postgreSQL: AppConfig.PostgreSQLConfig, tradingConfig: AppConfig.TradingConfig)
+  final case class AppConfig(
+      postgreSQL: AppConfig.PostgreSQLConfig,
+      httpServer: AppConfig.HttpServerConfig,
+      tradingConfig: AppConfig.TradingConfig
+  )
 
   object AppConfig:
     final case class PostgreSQLConfig(
@@ -16,6 +20,7 @@ object config:
         database: NonEmptyString,
         max: Int
     )
+    final case class HttpServerConfig(host: NonEmptyString, port: Int)
 
     final case class TradingConfig(
         maxAccountNoLength: Int,
