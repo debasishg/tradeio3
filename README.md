@@ -38,4 +38,21 @@ Use database to fetch data
 select * from accounts;
 ```
 
+## Run the trading application
 
+The trading application runs with the front office order and execution files as present in `modules/core/src/main/resources`.
+
+```
+sbt "project core; runMain tradex.domain.TradeApp"
+```
+
+## Tapir integration
+
+Service integration with tapir is available for selective end-points. Try the instrument query service once the server is started as follows:
+
+```
+sbt "project core; runMain tradex.domain.Main"
+```
+
+* Invoke http://localhost:8080/api/instrument/US0378331005 for a sample instrument query
+* Invoke http://localhost:8080/docs to use Swagger UI
