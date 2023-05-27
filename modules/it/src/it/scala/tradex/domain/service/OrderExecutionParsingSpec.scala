@@ -30,11 +30,21 @@ object OrderExecutionParsingSpec extends ZIOSpecDefault:
       check(Gen.listOfN(5)(frontOfficeOrderGen(now)))(frontOfficeOrders =>
         for
           _ <- parseFrontOfficeOrders(frontOfficeOrders)
+
+          s <- ZStream
+            .fromIterable(frontOfficeOrders)
+            .via(CSV.encode[FrontOfficeOrder])
+            .runCollect
+            .map(bytes => new String(bytes.toArray))
+
+          _ <- ZIO.logInfo(s)
+
           ordersInserted <- ZIO
             .serviceWithZIO[OrderRepository](
               _.queryByOrderDate(LocalDate.ofInstant(now, ZoneOffset.UTC))
             )
           _ <- parseExchangeExecutions(ordersInserted)
+          _ <- generateExchangeExecutionsCSV(ordersInserted)
           exesInserted <- ZIO.serviceWithZIO[ExecutionRepository](
             _.query(LocalDate.ofInstant(now, ZoneOffset.UTC))
           )
@@ -81,6 +91,16 @@ object OrderExecutionParsingSpec extends ZIOSpecDefault:
     ZIO
       .foreachPar(orders)(order => ExchangeExecution.fromOrder(order, Market.NewYork, now).map(_.toList))
       .map(_.flatten)
+
+  private def generateExchangeExecutionsCSV(ordersInserted: List[Order]) = for
+    exchangeExes <- generateExchangeExecutions(ordersInserted, now)
+    csv <- ZStream
+      .fromIterable(exchangeExes)
+      .via(CSV.encode[ExchangeExecution])
+      .runCollect
+      .map(bytes => new String(bytes.toArray))
+    _ <- ZIO.logInfo(csv)
+  yield ()
 
   private def clean = for
     _ <- ZIO.serviceWithZIO[ExecutionRepository](_.cleanAllExecutions)

@@ -49,16 +49,6 @@ object TradeApp extends ZIOAppDefault:
         config.appConfig
       )
 
-    def reader(name: String) = ZIO
-      .scoped(
-        ZIO.fromAutoCloseable(
-          ZStream
-            .fromResource(name)
-            .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
-            .toReader
-        )
-      )
-
     val genTrades = for
       now  <- zio.Clock.instant
       uuid <- zio.Random.nextUUID
@@ -69,11 +59,33 @@ object TradeApp extends ZIOAppDefault:
       _ <- ZIO.logInfo(s"Done generating ${trades.size} trades")
     yield ()
 
-    val tradingCycle = (reader("order.csv") <&> reader("execution.csv")).flatMap { case (order, execution) =>
-      ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(order)) *>
-        ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(execution)) *>
+    val parseFOrders =
+      ZIO
+        .scoped(
+          ZStream
+            .fromResource("forders.csv")
+            .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
+            .toReader
+            .flatMap(reader => ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(reader)))
+        )
+
+    val parseExchangeExecutions =
+      ZIO
+        .scoped(
+          ZStream
+            .fromResource("executions.csv")
+            .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
+            .toReader
+            .flatMap(reader => ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(reader)))
+        )
+
+    val tradingCycle =
+      ZIO.logInfo(s"Parsing front office orders ..") *>
+        parseFOrders *>
+        ZIO.logInfo(s"Parsing exchange executions ..") *>
+        parseExchangeExecutions *>
+        ZIO.logInfo(s"Generating trades ..") *>
         genTrades
-    }
 
     setupDB.provide(config.appConfig)
       *> tradingCycle.provide(live)

@@ -16,6 +16,8 @@ import model.account.*
 import model.instrument.*
 import repository.OrderRepository
 import zio.ZLayer
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 final case class FrontOfficeOrderParsingServiceLive(
     orderRepo: OrderRepository
@@ -38,12 +40,14 @@ final case class FrontOfficeOrderParsingServiceLive(
         makeOrder(ano, fos)
       }
 
-  private def makeOrderNo(accountNo: String, date: Instant): String = s"$accountNo-${date.hashCode}"
+  private def makeOrderNo(accountNo: String, date: LocalDate): String =
+    s"$accountNo-${DateTimeFormatter.ISO_LOCAL_DATE.format(date)}"
 
   private def makeOrder(ano: AccountNo, fos: NonEmptyChunk[FrontOfficeOrder]): UIO[Order] =
     Clock.instant.map(_.atOffset(ZoneOffset.UTC)).flatMap { now =>
-      val n   = Instant.now()
-      val ono = makeOrderNo(AccountNo.unwrap(ano), n)
+      val n     = Instant.now()
+      val odate = LocalDate.ofInstant(n, ZoneOffset.UTC)
+      val ono   = makeOrderNo(AccountNo.unwrap(ano), odate)
       val lineItems = fos.map { fo =>
         LineItem.make(
           OrderNo(ono),
