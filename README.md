@@ -2,21 +2,40 @@
 Sample trading domain model using Scala 3
 
 ## Run docker compose
->docker compose up
+Spins up PostgreSQL in docker
 
-## Connect to docker
->docker ps
+```
+docker compose up
+```
 
-use the container id returned fom docker ps
->docker exec -it 2a70a427bec5 bash
+## Connect to docker and run psql
 
-invoke psql
->psql -U postgres
+```
+docker ps
+```
 
-connect to database
->\c trading;
+Use the container id returned fom docker ps
 
-use database
->select * from accounts;
+```
+docker exec -it 2a70a427bec5 bash
+```
+
+Invoke psql
+
+```
+psql -U postgres
+```
+
+Connect to database
+
+```
+\c trading;
+```
+
+Use database to fetch data
+
+```
+select * from accounts;
+```
 
 
