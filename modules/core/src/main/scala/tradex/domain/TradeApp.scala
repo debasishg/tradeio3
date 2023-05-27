@@ -16,6 +16,8 @@ import repository.live.OrderRepositoryLive
 import repository.live.ExecutionRepositoryLive
 import service.{ ExchangeExecutionParsingService, FrontOfficeOrderParsingService, TradingService }
 import service.live.{ ExchangeExecutionParsingServiceLive, FrontOfficeOrderParsingServiceLive, TradingServiceLive }
+import java.io.IOException
+import java.io.Reader
 
 object TradeApp extends ZIOAppDefault:
   import TradeAppConfig.*
@@ -75,22 +77,24 @@ object TradeAppComponents:
     _ <- ZIO.logInfo(s"Done generating ${trades.size} trades")
   yield ()
 
-  def reader(name: String) =
+  private def reader(name: String): ZIO[Scope, IOException, Reader] =
     ZStream
       .fromResource(name)
       .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
       .toReader
 
-  val parseFrontOfficeOrders =
+  private def withCSV(name: String): ZIO[Scope, IOException, Reader] =
     ZIO
-      .scoped(
-        reader("forders.csv")
-          .flatMap(reader => ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(reader)))
-      )
+      .acquireRelease(reader(name))(rdr => ZIO.succeedBlocking(rdr.close()))
 
-  val parseExchangeExecutions =
-    ZIO
-      .scoped(
-        reader("executions.csv")
-          .flatMap(reader => ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(reader)))
-      )
+  val parseFrontOfficeOrders: ZIO[FrontOfficeOrderParsingService, Throwable, Unit] =
+    ZIO.scoped(
+      withCSV("forders.csv")
+        .flatMap(reader => ZIO.serviceWithZIO[FrontOfficeOrderParsingService](_.parse(reader)))
+    )
+
+  val parseExchangeExecutions: ZIO[ExchangeExecutionParsingService, Throwable, Unit] =
+    ZIO.scoped(
+      withCSV("executions.csv")
+        .flatMap(reader => ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(reader)))
+    )
