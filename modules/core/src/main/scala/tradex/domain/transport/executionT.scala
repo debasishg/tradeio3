@@ -2,7 +2,7 @@ package tradex.domain
 package transport
 
 import zio.json.*
-import cats.syntax.all._
+import cats.syntax.all.*
 import model.execution.*
 import accountT.{ given, * }
 import orderT.{ given, * }

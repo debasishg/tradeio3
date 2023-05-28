@@ -8,10 +8,16 @@ import api.common.ErrorInfo
 import sttp.tapir.ztapir.*
 import sttp.tapir.json.zio.jsonBody
 import model.instrument.*
+import model.account.*
+import model.order.*
+import model.trade.*
 import transport.instrumentT.{ given, * }
-import java.time.LocalDateTime
+import transport.tradeT.{ given, * }
+import java.time.{ LocalDate, LocalDateTime }
 import zio.ZLayer
 import cats.syntax.all.*
+import tradex.domain.model.trade.Trade
+import java.util.UUID
 
 final case class TradingEndpoints(
     base: BaseEndpoints
@@ -20,6 +26,12 @@ final case class TradingEndpoints(
     base.publicEndpoint.get
       .in("api" / "instrument" / path[String]("isin"))
       .out(jsonBody[Instrument].example(Examples.exampleInstrument))
+
+  val queryTradesByDateEndpoint =
+    base.publicEndpoint.get
+      .in("api" / "trade" / path[String]("accountno"))
+      .in(query[LocalDate]("tradedate"))
+      .out(jsonBody[List[Trade]]) // .example(Examples.exampleInstrument))
 
 private object Examples:
   val exampleInstrument = Equity.equity(

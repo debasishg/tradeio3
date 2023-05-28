@@ -10,9 +10,12 @@ import common.*
 import common.ErrorMapper.defaultErrorsMappings
 import scala.util.chaining.*
 import model.instrument.ISINCode
+import service.TradingService
+import tradex.domain.model.account.AccountNo
 
 final case class TradingServerEndpoints(
     instrumentService: InstrumentService,
+    tradingService: TradingService,
     tradingEndpoints: TradingEndpoints
 ):
   val getInstrumentEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.getInstrumentEndpoint
@@ -34,10 +37,31 @@ final case class TradingServerEndpoints(
         )
     }
 
+  val queryTradesByDateEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.queryTradesByDateEndpoint
+    .serverLogic { case (accountNo, tradeDate) =>
+      tradingService
+        .queryTradesForDate(
+          AccountNo(accountNo).validateNo
+            .fold(errs => throw new Exception(errs.toString), identity),
+          tradeDate
+        )
+        .pipe(r =>
+          defaultErrorsMappings(
+            r.collect(Exceptions.NotFound(s"No trades found for $accountNo and $tradeDate")) {
+              case trades if trades.nonEmpty => trades
+            }
+          )
+            .fold(
+              err => Left(err),
+              ins => Right(ins)
+            )
+        )
+
+    }
+
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
-    getInstrumentEndpoint
+    getInstrumentEndpoint ++ queryTradesByDateEndpoint
   )
 
 object TradingServerEndpoints:
-  val live: ZLayer[InstrumentService with TradingEndpoints, Nothing, TradingServerEndpoints] =
-    ZLayer.fromFunction(TradingServerEndpoints.apply _)
+  val live = ZLayer.fromFunction(TradingServerEndpoints.apply _)

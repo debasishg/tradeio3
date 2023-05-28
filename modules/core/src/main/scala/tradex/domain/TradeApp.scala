@@ -14,6 +14,7 @@ import resources.AppResources
 import model.user.UserId
 import repository.live.OrderRepositoryLive
 import repository.live.ExecutionRepositoryLive
+import repository.live.TradeRepositoryLive
 import service.{ ExchangeExecutionParsingService, FrontOfficeOrderParsingService, TradingService }
 import service.live.{ ExchangeExecutionParsingServiceLive, FrontOfficeOrderParsingServiceLive, TradingServiceLive }
 import java.io.IOException
@@ -59,6 +60,7 @@ object TradeAppConfig:
       TradingServiceLive.layer,
       OrderRepositoryLive.layer,
       ExecutionRepositoryLive.layer,
+      TradeRepositoryLive.layer,
       FrontOfficeOrderParsingServiceLive.layer,
       ExchangeExecutionParsingServiceLive.layer,
       appResourcesL.project(_.postgres),
@@ -75,6 +77,7 @@ object TradeAppComponents:
         _.generateTrades(LocalDate.ofInstant(now, ZoneOffset.UTC), UserId(uuid)).runCollect
       )
     _ <- ZIO.logInfo(s"Done generating ${trades.size} trades")
+    _ <- ZIO.logInfo(s"$trades")
   yield ()
 
   private def reader(name: String): ZIO[Scope, IOException, Reader] =

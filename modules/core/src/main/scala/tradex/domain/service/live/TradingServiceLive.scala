@@ -14,11 +14,15 @@ import model.trade.*
 import model.execution.*
 import model.order.*
 import model.user.*
-import repository.{ ExecutionRepository, OrderRepository }
+import repository.{ ExecutionRepository, OrderRepository, TradeRepository }
 import repository.live.ExecutionRepositorySQL
 import resources.AppResources
 
-final case class TradingServiceLive(session: Session[Task], orderRepository: OrderRepository) extends TradingService:
+final case class TradingServiceLive(
+    session: Session[Task],
+    orderRepository: OrderRepository,
+    tradeRepository: TradeRepository
+) extends TradingService:
 
   override def generateTrades(date: LocalDate, userId: UserId): ZStream[Any, Throwable, Trade] =
     ZStream.fromZIO(session.prepare(ExecutionRepositorySQL.selectByExecutionDate)).flatMap { pq =>
@@ -30,6 +34,9 @@ final case class TradingServiceLive(session: Session[Task], orderRepository: Ord
             .via(trades(userId))
         }
     }
+
+  override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
+    tradeRepository.query(accountNo, date)
 
   private val executionsWithAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
     ZPipeline.mapChunksZIO((inputs: Chunk[Execution]) =>
@@ -64,6 +71,7 @@ object TradingServiceLive:
   val layer =
     ZLayer.scoped(for
       orderRepository <- ZIO.service[OrderRepository]
+      tradeRepository <- ZIO.service[TradeRepository]
       appResources    <- ZIO.service[AppResources]
       session         <- appResources.postgres.toScopedZIO
-    yield TradingServiceLive(session, orderRepository))
+    yield TradingServiceLive(session, orderRepository, tradeRepository))

@@ -165,3 +165,16 @@ values (
   null,
   null
 );
+
+insert into instruments
+values (
+  'AU0000XVGZA3',
+  'Treasury Corp Victoria',
+  'FixedIncome',
+  '2018-08-25 19:10:25',
+  '2030-08-25 19:10:25',
+  1,
+  10000,
+  5.75,
+  'Annual'
+);

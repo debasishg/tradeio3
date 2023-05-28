@@ -23,5 +23,4 @@ object Endpoints:
     TradingServerEndpoints,
     Nothing,
     Endpoints
-  ] =
-    ZLayer.fromFunction(Endpoints.apply _)
+  ] = ZLayer.fromFunction(Endpoints.apply _)

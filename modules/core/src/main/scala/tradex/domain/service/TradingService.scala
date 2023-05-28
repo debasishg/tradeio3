@@ -4,6 +4,8 @@ package service
 import java.time.LocalDate
 import model.trade.*
 import model.user.*
+import model.account.AccountNo
+import zio.Task
 import zio.stream.ZStream
 
 trait TradingService:
@@ -11,3 +13,5 @@ trait TradingService:
       date: LocalDate,
       userId: UserId
   ): ZStream[Any, Throwable, Trade]
+
+  def queryTradesForDate(accountNo: AccountNo, date: LocalDate): Task[List[Trade]]

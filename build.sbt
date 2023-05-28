@@ -49,7 +49,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val consoleSettings = Seq(
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused", "-Ywarn-unused-import"),
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused", "-Ywarn-unused-import")
 )
 
 lazy val compilerOptions = {

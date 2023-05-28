@@ -16,6 +16,9 @@ import tradex.domain.config.AppConfig
 import resources.AppResources
 import natchez.Trace.Implicits.noop
 import cats.effect.std.Console
+import tradex.domain.service.live.TradingServiceLive
+import tradex.domain.repository.live.OrderRepositoryLive
+import tradex.domain.repository.live.TradeRepositoryLive
 
 object Main extends ZIOAppDefault:
 
@@ -50,8 +53,12 @@ object Main extends ZIOAppDefault:
         TradingEndpoints.live,
         BaseEndpoints.live,
         InstrumentServiceLive.layer,
+        TradingServiceLive.layer,
         InstrumentRepositoryLive.layer,
+        OrderRepositoryLive.layer,
+        TradeRepositoryLive.layer,
         appResourcesL.project(_.postgres),
+        appResourcesL,
         tradex.domain.config.appConfig,
         Server.defaultWithPort(port)
       )

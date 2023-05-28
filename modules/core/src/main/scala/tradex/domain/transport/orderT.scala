@@ -7,6 +7,8 @@ import model.order.*
 import model.market.*
 import instrumentT.{ given, * }
 import accountT.{ given, * }
+import sttp.tapir.Schema
+import sttp.tapir.SchemaType
 
 object orderT {
   given JsonDecoder[OrderNo] =
@@ -22,4 +24,6 @@ object orderT {
 
   given JsonCodec[LineItem] = DeriveJsonCodec.gen[LineItem]
   given JsonCodec[Order]    = DeriveJsonCodec.gen[Order]
+
+  given Schema[Quantity] = Schema(SchemaType.SNumber())
 }

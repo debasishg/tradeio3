@@ -5,6 +5,7 @@ import model.account.*
 import zio.json.*
 import cats.syntax.all.*
 import squants.market.Currency
+import sttp.tapir.Schema
 
 object accountT {
   given JsonDecoder[AccountNo] =
@@ -85,5 +86,7 @@ object accountT {
 
   // union types don't work with zio-json
   // given JsonCodec[ClientAccount] = DeriveJsonCodec.gen[ClientAccount]
+
+  given Schema[AccountNo] = Schema.string
 
 }
