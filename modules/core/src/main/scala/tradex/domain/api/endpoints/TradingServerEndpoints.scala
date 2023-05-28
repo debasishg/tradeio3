@@ -60,7 +60,8 @@ final case class TradingServerEndpoints(
     }
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
-    getInstrumentEndpoint ++ queryTradesByDateEndpoint
+    getInstrumentEndpoint,
+    queryTradesByDateEndpoint
   )
 
 object TradingServerEndpoints:
