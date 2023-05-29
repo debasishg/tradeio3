@@ -178,3 +178,10 @@ values (
   5.75,
   'Annual'
 );
+
+insert into taxFees
+values 
+  ('TradeTax', 'Trade Tax'),
+  ('VAT', 'VAT'),
+  ('Surcharge', 'Surcharge'),
+  ('Commission', 'Commission')

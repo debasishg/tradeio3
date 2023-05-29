@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import zio.Task
+import zio.{ Chunk, Task }
 import model.account.*
 import model.trade.*
 import model.market.*
@@ -23,4 +23,4 @@ trait TradeRepository:
   def store(trd: Trade): Task[Trade]
 
   /** store many trades */
-  def store(trades: NonEmptyList[Trade]): Task[Unit]
+  def store(trades: Chunk[Trade]): Task[Unit]

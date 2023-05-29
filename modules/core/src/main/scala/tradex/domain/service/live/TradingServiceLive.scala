@@ -32,6 +32,7 @@ final case class TradingServiceLive(
           executions
             .via(executionsWithAccountNo)
             .via(trades(userId))
+            .via(store)
         }
     }
 
@@ -66,6 +67,9 @@ final case class TradingServiceLive(
           .map(Trade.withTaxFee)
       }
     )
+
+  private def store: ZPipeline[Any, Throwable, Trade, Trade] =
+    ZPipeline.mapChunksZIO((trades: Chunk[Trade]) => tradeRepository.store(trades).as(trades))
 
 object TradingServiceLive:
   val layer =

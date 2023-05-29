@@ -55,4 +55,5 @@ sbt "project core; runMain tradex.domain.Main"
 ```
 
 * Invoke http://localhost:8080/api/instrument/US0378331005 for a sample instrument query
+* Invoke http://localhost:8080/api/trade/ibm-123?tradedate=2023-05-28 for a sample trade query
 * Invoke http://localhost:8080/docs to use Swagger UI

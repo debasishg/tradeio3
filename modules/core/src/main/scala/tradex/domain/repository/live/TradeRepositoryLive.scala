@@ -16,6 +16,7 @@ import codecs.{ given, * }
 import zio.interop.catz.*
 import zio.prelude.Associative
 import zio.ZLayer
+import zio.Chunk
 
 final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) extends TradeRepository:
   import TradeRepositorySQL.*
@@ -30,7 +31,7 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
         x.copy(taxFees = x.taxFees ++ y.taxFees)
     }
 
-  override def store(trades: NonEmptyList[Trade]): Task[Unit] =
+  override def store(trades: Chunk[Trade]): Task[Unit] =
     postgres.use { session =>
       ZIO
         .foreach(trades.toList)(trade => storeTradeAndTaxFees(trade, session))
@@ -107,8 +108,8 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
 
 private[domain] object TradeRepositorySQL:
   val tradeTaxFeeDecoder: Decoder[Trade] =
-    (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt ~ taxFeeId ~ money)
-      .map { case ref ~ ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ uidOpt ~ naOpt ~ tx ~ amt =>
+    (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
+      .map { case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ uidOpt ~ naOpt ~ tx ~ amt ~ ref =>
         (
           Trade(
             ref,

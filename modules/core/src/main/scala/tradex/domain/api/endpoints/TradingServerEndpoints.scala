@@ -37,8 +37,8 @@ final case class TradingServerEndpoints(
         )
     }
 
-  val queryTradesByDateEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.queryTradesByDateEndpoint
-    .serverLogic { case (accountNo, tradeDate) =>
+  val queryTradesByDateEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.queryTradesByDateEndpoint.serverLogic {
+    case (accountNo, tradeDate) =>
       tradingService
         .queryTradesForDate(
           AccountNo(accountNo).validateNo
@@ -57,7 +57,7 @@ final case class TradingServerEndpoints(
             )
         )
 
-    }
+  }
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
     getInstrumentEndpoint,

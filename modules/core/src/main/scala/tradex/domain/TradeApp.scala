@@ -69,12 +69,13 @@ object TradeAppConfig:
     )
 
 object TradeAppComponents:
+  val tradeDate = LocalDate.of(2023, 5, 28)
   val generateTrades = for
     now  <- zio.Clock.instant
     uuid <- zio.Random.nextUUID
     trades <- ZIO
       .serviceWithZIO[TradingService](
-        _.generateTrades(LocalDate.ofInstant(now, ZoneOffset.UTC), UserId(uuid)).runCollect
+        _.generateTrades(tradeDate, UserId(uuid)).runCollect
       )
     _ <- ZIO.logInfo(s"Done generating ${trades.size} trades")
     _ <- ZIO.logInfo(s"$trades")
