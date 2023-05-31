@@ -2,6 +2,9 @@ package tradex.domain
 package api
 package endpoints
 
+import zio.ZLayer
+import cats.syntax.all.*
+import java.util.UUID
 import common.BaseEndpoints
 import sttp.tapir.ztapir.ZPartialServerEndpoint
 import api.common.ErrorInfo
@@ -11,13 +14,12 @@ import model.instrument.*
 import model.account.*
 import model.order.*
 import model.trade.*
+import model.market.Market
+import model.user.UserId
+import squants.market.USD
 import transport.instrumentT.{ given, * }
 import transport.tradeT.{ given, * }
 import java.time.{ LocalDate, LocalDateTime }
-import zio.ZLayer
-import cats.syntax.all.*
-import model.trade.Trade
-import java.util.UUID
 
 final case class TradingEndpoints(
     base: BaseEndpoints
@@ -30,14 +32,14 @@ final case class TradingEndpoints(
   val addEquityEndpoint =
     base.publicEndpoint.put
       .in("api" / "instrument")
-      .in(jsonBody[AddEquityRequest])    // .example(Examples.AddEquityRequest))
-      .out(jsonBody[InstrumentResponse]) // .example(Examples.InstrumentResponse))
+      .in(jsonBody[AddEquityRequest].example(Examples.addEquityRequest))
+      .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
 
   val queryTradesByDateEndpoint =
     base.publicEndpoint.get
       .in("api" / "trade" / path[String]("accountno"))
       .in(query[LocalDate]("tradedate"))
-      .out(jsonBody[List[Trade]]) // .example(Examples.exampleInstrument))
+      .out(jsonBody[List[Trade]].example(List(Examples.trade)))
 
 private object Examples:
   val exampleInstrument = Equity.equity(
@@ -55,6 +57,39 @@ private object Examples:
       .leftMap(identity)
       .fold(err => throw new Exception(err), identity)
   )
+  val addEquityRequest = AddEquityRequest(
+    AddEquityData(
+      isin = ISINCode
+        .make("US0378331005")
+        .toEitherAssociative
+        .leftMap(identity)
+        .fold(err => throw new Exception(err), identity),
+      name = InstrumentName(NonEmptyString("Apple Inc.")),
+      lotSize = LotSize(100),
+      issueDate = LocalDateTime.now(),
+      unitPrice = UnitPrice
+        .make(100)
+        .toEitherAssociative
+        .leftMap(identity)
+        .fold(err => throw new Exception(err), identity)
+    )
+  )
+  val instrumentResponse = InstrumentResponse(exampleInstrument)
+  val trade =
+    Trade(
+      TradeRefNo(UUID.randomUUID()),
+      AccountNo("ibm-123"),
+      ISINCode("US0378331005"),
+      Market.NewYork,
+      BuySell.Buy,
+      UnitPrice.wrap(BigDecimal(12.25)),
+      Quantity.wrap(100),
+      LocalDateTime.now,
+      None,
+      Some(UserId(UUID.randomUUID())),
+      List(TradeTaxFee(TaxFeeId.TradeTax, USD(245)), TradeTaxFee(TaxFeeId.Commission, USD(183.75))),
+      None
+    )
 
 object TradingEndpoints:
   val live: ZLayer[BaseEndpoints, Nothing, TradingEndpoints] =
