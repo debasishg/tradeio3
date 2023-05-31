@@ -29,11 +29,7 @@ final case class TradingServerEndpoints(
         )
         .logError
         .pipe(r =>
-          defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found")))
-            .fold(
-              err => Left(err),
-              ins => Right(ins)
-            )
+          defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found"))).either
         )
     }
 
@@ -67,11 +63,7 @@ final case class TradingServerEndpoints(
             r.collect(Exceptions.NotFound(s"No trades found for $accountNo and $tradeDate")) {
               case trades if trades.nonEmpty => trades
             }
-          )
-            .fold(
-              err => Left(err),
-              ins => Right(ins)
-            )
+          ).either
         )
   }
 
