@@ -16,7 +16,7 @@ import transport.tradeT.{ given, * }
 import java.time.{ LocalDate, LocalDateTime }
 import zio.ZLayer
 import cats.syntax.all.*
-import tradex.domain.model.trade.Trade
+import model.trade.Trade
 import java.util.UUID
 
 final case class TradingEndpoints(
@@ -26,6 +26,12 @@ final case class TradingEndpoints(
     base.publicEndpoint.get
       .in("api" / "instrument" / path[String]("isin"))
       .out(jsonBody[Instrument].example(Examples.exampleInstrument))
+
+  val addEquityEndpoint =
+    base.publicEndpoint.put
+      .in("api" / "instrument")
+      .in(jsonBody[AddEquityRequest])    // .example(Examples.AddEquityRequest))
+      .out(jsonBody[InstrumentResponse]) // .example(Examples.InstrumentResponse))
 
   val queryTradesByDateEndpoint =
     base.publicEndpoint.get

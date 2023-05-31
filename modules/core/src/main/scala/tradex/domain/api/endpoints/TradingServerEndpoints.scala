@@ -5,13 +5,12 @@ package endpoints
 import zio.{ ZIO, ZLayer }
 import cats.syntax.all.*
 import sttp.tapir.ztapir.*
-import service.InstrumentService
+import service.{ InstrumentService, TradingService }
 import common.*
 import common.ErrorMapper.defaultErrorsMappings
 import scala.util.chaining.*
 import model.instrument.ISINCode
-import service.TradingService
-import tradex.domain.model.account.AccountNo
+import model.account.AccountNo
 
 final case class TradingServerEndpoints(
     instrumentService: InstrumentService,
@@ -28,6 +27,7 @@ final case class TradingServerEndpoints(
             .leftMap(identity)
             .fold(err => throw new Exception(err), identity)
         )
+        .logError
         .pipe(r =>
           defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found")))
             .fold(
@@ -37,6 +37,22 @@ final case class TradingServerEndpoints(
         )
     }
 
+  val addEquityEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.addEquityEndpoint
+    .serverLogic(data =>
+      instrumentService
+        .addEquity(
+          data.equityData.isin,
+          data.equityData.name,
+          data.equityData.lotSize,
+          data.equityData.issueDate,
+          data.equityData.unitPrice
+        )
+        .logError
+        .pipe(defaultErrorsMappings)
+        .map(InstrumentResponse.apply)
+        .either
+    )
+
   val queryTradesByDateEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.queryTradesByDateEndpoint.serverLogic {
     case (accountNo, tradeDate) =>
       tradingService
@@ -45,6 +61,7 @@ final case class TradingServerEndpoints(
             .fold(errs => throw new Exception(errs.toString), identity),
           tradeDate
         )
+        .logError
         .pipe(r =>
           defaultErrorsMappings(
             r.collect(Exceptions.NotFound(s"No trades found for $accountNo and $tradeDate")) {
@@ -56,11 +73,11 @@ final case class TradingServerEndpoints(
               ins => Right(ins)
             )
         )
-
   }
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
     getInstrumentEndpoint,
+    addEquityEndpoint,
     queryTradesByDateEndpoint
   )
 

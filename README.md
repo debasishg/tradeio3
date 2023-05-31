@@ -55,5 +55,21 @@ sbt "project core; runMain tradex.domain.Main"
 ```
 
 * Invoke http://localhost:8080/api/instrument/US0378331005 for a sample instrument query
-* Invoke http://localhost:8080/api/trade/ibm-123?tradedate=2023-05-28 for a sample trade query
+
+* Invoke `curl -X PUT http://localhost:8080/api/instrument -H "Accept: application/json" -H "Content-Type: application/json" -d @./equity.json`
+
+with equity.json having the following:
+
+```{
+  "equityData": {
+    "isin": "US30303M1027",
+    "name": {"value" : "Meta"},
+    "lotSize": 1,
+    "issueDate": "2019-08-25T19:10:25",
+    "unitPrice": 180.00
+  }
+}```
+
+* Running `TradeApp` will generate trades and insert into trade repository. Run `Main` and invoke http://localhost:8080/api/trade/ibm-123?tradedate=2023-05-28 for a sample trade query
+
 * Invoke http://localhost:8080/docs to use Swagger UI
