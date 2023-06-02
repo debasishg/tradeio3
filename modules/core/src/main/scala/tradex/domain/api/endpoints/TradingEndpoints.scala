@@ -27,12 +27,18 @@ final case class TradingEndpoints(
   val getInstrumentEndpoint =
     base.publicEndpoint.get
       .in("api" / "instrument" / path[String]("isin"))
-      .out(jsonBody[Instrument].example(Examples.exampleInstrument))
+      .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
 
   val addEquityEndpoint =
     base.publicEndpoint.put
       .in("api" / "instrument")
       .in(jsonBody[AddEquityRequest].example(Examples.addEquityRequest))
+      .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
+
+  val addFixedIncomeEndpoint =
+    base.publicEndpoint.put
+      .in("api" / "instrument")
+      .in(jsonBody[AddFixedIncomeRequest]) // .example(Examples.addFixedIncomeRequest))
       .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
 
   val queryTradesByDateEndpoint =

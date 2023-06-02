@@ -28,9 +28,9 @@ final case class TradingServerEndpoints(
             .fold(err => throw new Exception(err), identity)
         )
         .logError
-        .pipe(r =>
-          defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found"))).either
-        )
+        .pipe(r => defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found"))))
+        .map(InstrumentResponse.apply)
+        .either
     }
 
   val addEquityEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.addEquityEndpoint
@@ -42,6 +42,24 @@ final case class TradingServerEndpoints(
           data.equityData.lotSize,
           data.equityData.issueDate,
           data.equityData.unitPrice
+        )
+        .logError
+        .pipe(defaultErrorsMappings)
+        .map(InstrumentResponse.apply)
+        .either
+    )
+
+  val addFixedIncomeEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.addFixedIncomeEndpoint
+    .serverLogic(data =>
+      instrumentService
+        .addFixedIncome(
+          data.fiData.isin,
+          data.fiData.name,
+          data.fiData.lotSize,
+          data.fiData.issueDate,
+          data.fiData.maturityDate,
+          data.fiData.couponRate,
+          data.fiData.couponFrequency
         )
         .logError
         .pipe(defaultErrorsMappings)
@@ -70,6 +88,7 @@ final case class TradingServerEndpoints(
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
     getInstrumentEndpoint,
     addEquityEndpoint,
+    addFixedIncomeEndpoint,
     queryTradesByDateEndpoint
   )
 
