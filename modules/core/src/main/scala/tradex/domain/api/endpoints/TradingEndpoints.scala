@@ -31,13 +31,13 @@ final case class TradingEndpoints(
 
   val addEquityEndpoint =
     base.publicEndpoint.put
-      .in("api" / "instrument")
+      .in("api" / "instrument" / "equity")
       .in(jsonBody[AddEquityRequest].example(Examples.addEquityRequest))
       .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
 
   val addFixedIncomeEndpoint =
     base.publicEndpoint.put
-      .in("api" / "instrument")
+      .in("api" / "instrument" / "fi")
       .in(jsonBody[AddFixedIncomeRequest]) // .example(Examples.addFixedIncomeRequest))
       .out(jsonBody[InstrumentResponse].example(Examples.instrumentResponse))
 

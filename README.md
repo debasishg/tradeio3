@@ -38,6 +38,17 @@ Use database to fetch data
 select * from accounts;
 ```
 
+## Compile and run tests
+
+```
+$ sbt clean
+$ sbt compile
+$ sbt testOnly
+$ sbt it:testOnly
+```
+
+Note running integration tests needs the `docker-compose` to run
+
 ## Run the trading application
 
 The trading application runs with the front office order and execution files as present in `modules/core/src/main/resources`.

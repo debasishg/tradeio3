@@ -39,12 +39,14 @@ object Dependencies {
     val tapirJsonZio       = "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % tapirVersion
     val tapirSwagger       = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion
   }
-  val squants           = "org.typelevel"              %% "squants"               % squantsVersion
-  val monocleCore       = "dev.optics"                 %% "monocle-core"          % monocleVersion
-  val quickLens         = "com.softwaremill.quicklens" %% "quicklens"             % quickLensVersion
-  val flywayDb          = "org.flywaydb"                % "flyway-core"           % flywayDbVersion
-  val kantanCSV         = "com.nrinaudo"                % "kantan.csv_2.13"       % kantanCsvVersion
-  val kantanCSVDateTime = "com.nrinaudo"                % "kantan.csv-java8_2.13" % kantanCsvVersion
+  val squants           = "org.typelevel"                 %% "squants"                % squantsVersion
+  val monocleCore       = "dev.optics"                    %% "monocle-core"           % monocleVersion
+  val quickLens         = "com.softwaremill.quicklens"    %% "quicklens"              % quickLensVersion
+  val flywayDb          = "org.flywaydb"                   % "flyway-core"            % flywayDbVersion
+  val kantanCSV         = "com.nrinaudo"                   % "kantan.csv_2.13"        % kantanCsvVersion
+  val kantanCSVDateTime = "com.nrinaudo"                   % "kantan.csv-java8_2.13"  % kantanCsvVersion
+  val sttpZioJson       = "com.softwaremill.sttp.client3" %% "zio-json"               % sttpZioJsonVersion % Test
+  val sttpStubServer    = "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server" % tapirVersion       % Test
 
   // Runtime
   val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % Runtime
@@ -72,8 +74,9 @@ object Dependencies {
     commonDependencies ++ Seq(squants) ++ Seq(flywayDb) ++
       Seq(Circe.circeCore, Circe.circeGeneric, Circe.circeParser) ++ Seq(monocleCore) ++
       Seq(Skunk.skunkCore, Skunk.skunkCirce) ++
-      Seq(Tapir.tapirZioHttpServer, Tapir.tapirJsonZio, Tapir.tapirSwagger)
+      Seq(Tapir.tapirZioHttpServer, Tapir.tapirJsonZio, Tapir.tapirSwagger) ++
+      Seq(sttpZioJson, sttpStubServer)
 
   val testDependencies: Seq[ModuleID] =
-    Seq(Zio.zioTest, Zio.zioTestSbt)
+    Seq(Zio.zioTest, Zio.zioTestSbt, sttpZioJson, sttpStubServer)
 }

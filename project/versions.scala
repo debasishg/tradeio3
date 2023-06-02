@@ -15,6 +15,7 @@ object Versions {
   val zioLoggingVersion     = "2.1.11"
   val quickLensVersion      = "1.9.2"
   val zioJsonVersion        = "0.5.0"
+  val sttpZioJsonVersion    = "3.8.15"
   val flywayDbVersion       = "9.1.6"
   val kantanCsvVersion      = "0.7.0"
   val tapirVersion          = "1.3.0"
