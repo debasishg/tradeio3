@@ -14,15 +14,9 @@ import natchez.Trace.Implicits.noop
 import cats.effect.std.Console
 import service.live.{ InstrumentServiceLive, TradingServiceLive }
 import repository.live.{ InstrumentRepositoryLive, OrderRepositoryLive, TradeRepositoryLive }
+import Fixture.appResourcesL
 
 object TradingEndpointsSpec extends ZIOSpecDefault:
-  given Console[Task] = Console.make[Task]
-  val appResourcesL: ZLayer[AppConfig, Throwable, AppResources] = ZLayer.scoped(
-    for
-      config <- ZIO.service[AppConfig]
-      res    <- AppResources.make(config).toScopedZIO
-    yield res
-  )
 
   override def spec = suite("trading endpoints tests")(
     suite("getInstrumentEndpoint")(
