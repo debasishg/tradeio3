@@ -26,3 +26,19 @@ object RepositoryTestSupport:
 
   def insertOneEquity: ZIO[InstrumentRepository, Throwable, Instrument] =
     ZIO.serviceWithZIO[InstrumentRepository](_.store(exampleInstrument))
+
+  val addEquityData = AddEquityData(
+    isin = ISINCode
+      .make("US30303M1057")
+      .toEitherAssociative
+      .leftMap(identity)
+      .fold(err => throw new Exception(err), identity),
+    name = InstrumentName(NonEmptyString("NRI")),
+    lotSize = LotSize(100),
+    issueDate = LocalDateTime.now(),
+    unitPrice = UnitPrice
+      .make(100)
+      .toEitherAssociative
+      .leftMap(identity)
+      .fold(err => throw new Exception(err), identity)
+  )

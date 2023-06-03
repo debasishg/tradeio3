@@ -23,6 +23,22 @@ object TradingEndpointsTestSupport:
     val requestWithUri = basicRequest.get(uri)
     executeRequest[InstrumentResponse](requestWithUri, getInstrumentEndpoint)
 
+  def callAddEquityEndpoint(
+      uri: Uri,
+      equityData: AddEquityData
+  ): ZIO[TradingServerEndpoints, Throwable, Either[ResponseException[String, String], InstrumentResponse]] =
+    ZIO
+      .service[TradingServerEndpoints]
+      .map(_.addEquityEndpoint)
+      .flatMap { endpoint =>
+        basicRequest
+          .put(uri)
+          .body(AddEquityRequest(equityData))
+          .response(asJson[InstrumentResponse])
+          .send(backendStub(endpoint))
+          .map(_.body)
+      }
+
   private def executeRequest[T: JsonCodec](
       requestWithUri: Request[Either[String, String], Any],
       endpoint: ZIO[TradingServerEndpoints, Nothing, ZServerEndpoint[Any, Any]]

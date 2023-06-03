@@ -19,18 +19,18 @@ final case class TradingServerEndpoints(
 ):
   val getInstrumentEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.getInstrumentEndpoint
     .serverLogic { isin =>
-      instrumentService
-        .query(
-          ISINCode
-            .make(isin)
-            .toEitherAssociative
-            .leftMap(identity)
-            .fold(err => throw new Exception(err), identity)
-        )
-        .logError
-        .pipe(r => defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found"))))
-        .map(InstrumentResponse.apply)
-        .either
+      makeISINCode(isin)
+        .flatMap { isinCode =>
+          instrumentService
+            .query(isinCode)
+            .logError
+            .pipe(r =>
+              defaultErrorsMappings(r.someOrFail(Exceptions.NotFound(s"Instrument with ISIN $isin not found")))
+            )
+            .map(InstrumentResponse.apply)
+            .either
+        }
+        .catchAll(th => ZIO.fail(Exceptions.BadRequest(th.getMessage)))
     }
 
   val addEquityEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.addEquityEndpoint
@@ -84,6 +84,17 @@ final case class TradingServerEndpoints(
           ).either
         )
   }
+
+  private def makeISINCode(isin: String) =
+    val is = ISINCode
+      .make(isin)
+      .toEitherAssociative
+      .leftMap(identity)
+
+    ZIO
+      .fromEither(is)
+      .mapError(new Throwable(_))
+  // .mapError(BadRequest.apply)
 
   val endpoints: List[ZServerEndpoint[Any, Any]] = List(
     getInstrumentEndpoint,
