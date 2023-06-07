@@ -4,7 +4,7 @@ package api
 import model.instrument.*
 import java.time.LocalDateTime
 import zio.json.*
-import transport.instrumentT.{ given, * }
+import transport.instrumentT.{ *, given }
 import sttp.tapir.Schema
 import sttp.tapir.generic.auto.*
 

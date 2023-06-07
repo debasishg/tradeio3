@@ -20,10 +20,10 @@ object trade:
   type TradeRefNo = TradeRefNo.Type
 
   enum TaxFeeId(val entryName: NonEmptyString):
-    case TradeTax extends TaxFeeId(NonEmptyString("TradeTax"))
+    case TradeTax   extends TaxFeeId(NonEmptyString("TradeTax"))
     case Commission extends TaxFeeId(NonEmptyString("Commission"))
-    case VAT extends TaxFeeId(NonEmptyString("VAT"))
-    case Surcharge extends TaxFeeId(NonEmptyString("Surcharge"))
+    case VAT        extends TaxFeeId(NonEmptyString("VAT"))
+    case Surcharge  extends TaxFeeId(NonEmptyString("Surcharge"))
 
   import TaxFeeId.*
 

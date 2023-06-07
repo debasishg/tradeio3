@@ -10,7 +10,7 @@ import skunk.implicits.*
 import model.account.*
 import model.balance.*
 import java.time.LocalDate
-import codecs.{ given, * }
+import codecs.{ *, given }
 import model.balance.*
 import zio.interop.catz.*
 
@@ -18,34 +18,33 @@ final case class BalanceRepositoryLive(postgres: Resource[Task, Session[Task]]) 
   import BalanceRepositorySQL.*
 
   override def store(b: Balance): Task[Balance] =
-    postgres.use { session =>
-      session.prepare(upsertBalance).flatMap { cmd =>
-        cmd.execute(b).unit.map(_ => b)
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(upsertBalance)
+        .flatMap: cmd =>
+          cmd.execute(b).unit.map(_ => b)
 
   override def all: Task[List[Balance]] = postgres.use(_.execute(selectAll))
 
   override def query(date: LocalDate): Task[List[Balance]] =
-    postgres.use { session =>
-      session.prepare(selectByDate).flatMap { ps =>
-        ps.stream(date, 1024).compile.toList
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectByDate)
+        .flatMap: ps =>
+          ps.stream(date, 1024).compile.toList
 
   override def query(no: AccountNo): Task[Option[Balance]] =
-    postgres.use { session =>
-      session.prepare(selectByAccountNo).flatMap { ps =>
-        ps.option(no)
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectByAccountNo)
+        .flatMap: ps =>
+          ps.option(no)
 
 private[domain] object BalanceRepositorySQL:
   val decoder: Decoder[Balance] =
     (accountNo ~ money ~ timestamp ~ currency)
-      .map { case ano ~ amt ~ asOf ~ ccy =>
-        Balance(ano, amt, ccy, asOf)
-      }
+      .map:
+        case ano ~ amt ~ asOf ~ ccy => Balance(ano, amt, ccy, asOf)
 
   val encoder: Encoder[Balance] =
     (accountNo ~ money ~ timestamp ~ currency).values

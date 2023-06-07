@@ -25,7 +25,7 @@ object order {
   type Quantity = Quantity.Type
 
   enum BuySell(val entryName: NonEmptyString):
-    case Buy extends BuySell(NonEmptyString("buy"))
+    case Buy  extends BuySell(NonEmptyString("buy"))
     case Sell extends BuySell(NonEmptyString("sell"))
 
   object BuySell:

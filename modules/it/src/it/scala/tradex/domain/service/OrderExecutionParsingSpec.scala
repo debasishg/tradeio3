@@ -12,8 +12,8 @@ import model.frontOfficeOrder.FrontOfficeOrder
 import model.exchangeExecution.ExchangeExecution
 import model.order.Order
 import model.market.Market
-import transport.frontOfficeOrderT.{ given, * }
-import transport.exchangeExecutionT.{ given, * }
+import transport.frontOfficeOrderT.{ *, given }
+import transport.exchangeExecutionT.{ *, given }
 import service.live.FrontOfficeOrderParsingServiceLive
 import service.live.ExchangeExecutionParsingServiceLive
 import repository.live.OrderRepositoryLive

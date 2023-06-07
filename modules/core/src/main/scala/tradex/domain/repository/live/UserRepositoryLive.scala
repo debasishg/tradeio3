@@ -8,29 +8,28 @@ import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
 import model.user.*
-import codecs.{ given, * }
+import codecs.{ *, given }
 import zio.interop.catz.*
 
 final case class UserRepositoryLive(postgres: Resource[Task, Session[Task]]) extends UserRepository:
   import UserRepositorySQL.*
 
   override def query(userName: UserName): Task[Option[User]] =
-    postgres.use { session =>
-      session.prepare(selectByUserName).flatMap { ps =>
-        ps.option(userName)
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectByUserName)
+        .flatMap: ps =>
+          ps.option(userName)
 
   override def store(userName: UserName, password: EncryptedPassword): Task[UserId] =
-    postgres.use { session =>
-      session.prepare(upsertUser).flatMap { cmd =>
-        Random.nextUUID.flatMap { id =>
-          cmd
-            .execute(User(UserId(id), userName, password))
-            .as(UserId(id))
-        }
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(upsertUser)
+        .flatMap: cmd =>
+          Random.nextUUID.flatMap: id =>
+            cmd
+              .execute(User(UserId(id), userName, password))
+              .as(UserId(id))
 
 private[domain] object UserRepositorySQL:
   val decoder: Decoder[User] =

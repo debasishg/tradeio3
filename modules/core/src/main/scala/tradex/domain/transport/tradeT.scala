@@ -7,10 +7,10 @@ import sttp.tapir.generic.auto.*
 import java.util.UUID
 import cats.syntax.all.*
 import model.trade.*
-import accountT.{ given, * }
-import instrumentT.{ given, * }
-import orderT.{ given, * }
-import userT.{ given, * }
+import accountT.{ *, given }
+import instrumentT.{ *, given }
+import orderT.{ *, given }
+import userT.{ *, given }
 
 object tradeT {
   given JsonDecoder[TradeRefNo] =

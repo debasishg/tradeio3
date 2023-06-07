@@ -30,7 +30,7 @@ object CSV:
 
   enum ParsedResult[+A]:
     case Failed(index: Long, error: ReadError) extends ParsedResult[Nothing]
-    case Succeed[A](index: Long, value: A) extends ParsedResult[A]
+    case Succeed[A](index: Long, value: A)     extends ParsedResult[A]
 
     def toEither: Either[ReadError, A] = this match
       case Failed(_, error)  => Left(error)

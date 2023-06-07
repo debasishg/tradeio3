@@ -4,7 +4,7 @@ package transport
 import kantan.csv.RowDecoder
 import kantan.csv.java8.*
 import model.exchangeExecution.*
-import cellCodecs.{ given, * }
+import cellCodecs.{ *, given }
 import kantan.csv.HeaderCodec
 import model.account.AccountNo
 import model.order.OrderNo

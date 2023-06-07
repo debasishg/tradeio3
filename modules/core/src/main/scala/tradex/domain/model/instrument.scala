@@ -23,8 +23,8 @@ object instrument {
   type LotSize = LotSize.Type
 
   enum InstrumentType(val entryName: String):
-    case CCY extends InstrumentType("Ccy")
-    case Equity extends InstrumentType("Equity")
+    case CCY         extends InstrumentType("Ccy")
+    case Equity      extends InstrumentType("Equity")
     case FixedIncome extends InstrumentType("Fixed Income")
 
   object UnitPrice extends Subtype[BigDecimal]:
@@ -32,7 +32,7 @@ object instrument {
   type UnitPrice = UnitPrice.Type
 
   enum CouponFrequency(val entryName: NonEmptyString):
-    case Annual extends CouponFrequency(NonEmptyString("annual"))
+    case Annual     extends CouponFrequency(NonEmptyString("annual"))
     case SemiAnnual extends CouponFrequency(NonEmptyString("semi-annual"))
 
   final case class InstrumentBase(

@@ -12,7 +12,7 @@ import model.trade.*
 import model.account.*
 import java.time.LocalDate
 import zio.prelude.NonEmptyList
-import codecs.{ given, * }
+import codecs.{ *, given }
 import zio.interop.catz.*
 import zio.prelude.Associative
 import zio.ZLayer
@@ -26,107 +26,100 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
   // NOT a generic semigroup that combines all trades - only specific
   // to this query - hence not added in the companion object
   implicit val tradeConcatSemigroup: Associative[Trade] =
-    new Associative[Trade] {
+    new Associative[Trade]:
       def combine(x: => Trade, y: => Trade): Trade =
         x.copy(taxFees = x.taxFees ++ y.taxFees)
-    }
 
   override def store(trades: Chunk[Trade]): Task[Unit] =
-    postgres.use { session =>
+    postgres.use: session =>
       ZIO
         .foreach(trades.toList)(trade => storeTradeAndTaxFees(trade, session))
         .unit
-    }
 
   override def all: Task[List[Trade]] =
-    postgres.use { session =>
-      session.prepare(selectAll).flatMap { ps =>
-        ps.stream(skunk.Void, 1024)
-          .compile
-          .toList
-          .map(_.groupBy(_.tradeRefNo))
-          .map {
-            _.map { case (_, trades) =>
-              trades.reduce(Associative[Trade].combine(_, _))
-            }.toList
-          }
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectAll)
+        .flatMap: ps =>
+          ps.stream(skunk.Void, 1024)
+            .compile
+            .toList
+            .map(_.groupBy(_.tradeRefNo))
+            .map:
+              _.map:
+                case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+              .toList
 
   override def store(trd: Trade): Task[Trade] =
-    postgres.use { session =>
+    postgres.use: session =>
       storeTradeAndTaxFees(trd, session)
-    }
 
   private def storeTradeAndTaxFees(
       t: Trade,
       session: Session[Task]
-  ): Task[Trade] = {
-    val r = for {
+  ): Task[Trade] =
+    val r = for
       p1 <- session.prepare(insertTrade)
       p2 <- session.prepare(insertTaxFees(t.tradeRefNo, t.taxFees))
-    } yield (p1, p2)
-    r.flatMap { case (p1, p2) =>
-      session.transaction.use { _ =>
-        for {
-          _ <- p1.execute(t)
-          _ <- p2.execute(t.taxFees)
-        } yield ()
-      }
-    }.map(_ => t)
-  }
+    yield (p1, p2)
+
+    r.flatMap:
+      case (p1, p2) =>
+        session.transaction.use: _ =>
+          for
+            _ <- p1.execute(t)
+            _ <- p2.execute(t.taxFees)
+          yield ()
+    .map(_ => t)
 
   override def query(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
-    postgres.use { session =>
-      session.prepare(selectByAccountNoAndDate).flatMap { ps =>
-        ps.stream(accountNo ~ date, 1024)
-          .compile
-          .toList
-          .map(_.groupBy(_.tradeRefNo))
-          .map {
-            _.map { case (_, trades) =>
-              trades.reduce(Associative[Trade].combine(_, _))
-            }.toList
-          }
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectByAccountNoAndDate)
+        .flatMap: ps =>
+          ps.stream(accountNo ~ date, 1024)
+            .compile
+            .toList
+            .map(_.groupBy(_.tradeRefNo))
+            .map:
+              _.map:
+                case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+              .toList
 
   override def queryByMarket(market: Market): Task[List[Trade]] =
-    postgres.use { session =>
+    postgres.use: session =>
       session.prepare(selectByMarket).flatMap { ps =>
         ps.stream(market, 1024)
           .compile
           .toList
           .map(_.groupBy(_.tradeRefNo))
-          .map {
-            _.map { case (_, trades) =>
-              trades.reduce(Associative[Trade].combine(_, _))
-            }.toList
-          }
+          .map:
+            _.map:
+              case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+            .toList
       }
-    }
 
 private[domain] object TradeRepositorySQL:
   val tradeTaxFeeDecoder: Decoder[Trade] =
     (accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt ~ taxFeeId ~ money ~ tradeRefNo)
-      .map { case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ uidOpt ~ naOpt ~ tx ~ amt ~ ref =>
-        (
-          Trade(
-            ref,
-            ano,
-            isin,
-            mkt,
-            bs,
-            up,
-            qty,
-            td,
-            vdOpt,
-            uidOpt,
-            List(TradeTaxFee(tx, amt)),
-            naOpt
+      .map:
+        case ano ~ isin ~ mkt ~ bs ~ up ~ qty ~ td ~ vdOpt ~ uidOpt ~ naOpt ~ tx ~ amt ~ ref =>
+          (
+            Trade(
+              ref,
+              ano,
+              isin,
+              mkt,
+              bs,
+              up,
+              qty,
+              td,
+              vdOpt,
+              uidOpt,
+              List(TradeTaxFee(tx, amt)),
+              naOpt
+            )
           )
-        )
-      }
 
   val tradeEncoder: Encoder[Trade] =
     (tradeRefNo ~ accountNo ~ isinCode ~ market ~ buySell ~ unitPrice ~ quantity ~ timestamp ~ timestamp.opt ~ userId.opt ~ money.opt).values
@@ -168,7 +161,7 @@ private[domain] object TradeRepositorySQL:
     sql"INSERT INTO tradeTaxFees (tradeRefNo, taxFeeId, amount) VALUES $es".command
   }
 
-  def insertTrades(trades: List[Trade]): Command[trades.type] = {
+  def insertTrades(trades: List[Trade]): Command[trades.type] =
     val enc = tradeEncoder.list(trades)
     sql"""
         INSERT INTO trades
@@ -186,7 +179,6 @@ private[domain] object TradeRepositorySQL:
           , netAmount
         )
         VALUES $enc""".command
-  }
 
   val selectByAccountNoAndDate =
     sql"""

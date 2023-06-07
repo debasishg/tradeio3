@@ -7,7 +7,7 @@ import zio.stream.{ ZPipeline, ZStream }
 import zio.prelude.NonEmptyList
 import java.io.Reader
 import kantan.csv.rfc
-import transport.exchangeExecutionT.{ given, * }
+import transport.exchangeExecutionT.{ *, given }
 import model.exchangeExecution.*
 import model.execution.*
 import repository.ExecutionRepository

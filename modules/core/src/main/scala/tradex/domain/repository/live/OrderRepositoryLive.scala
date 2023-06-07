@@ -12,7 +12,7 @@ import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
-import codecs.{ given, * }
+import codecs.{ *, given }
 import zio.prelude.Associative
 import zio.interop.catz.*
 
@@ -54,29 +54,27 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
         ) *>
       session
         .prepare(insertLineItems(ord.no, lineItems))
-        .flatMap { cmd =>
+        .flatMap: cmd =>
           cmd.execute(lineItems)
-        }
         .unit
         .map(_ => ord)
 
   override def query(no: OrderNo): Task[Option[Order]] =
-    postgres.use { session =>
-      session.prepare(selectByOrderNo).flatMap { ps =>
-        ps.stream(no, 1024)
-          .compile
-          .toList
-          .map(_.groupBy(_.no))
-          .map {
-            _.map { case (_, lis) =>
-              lis.reduce(Associative[Order].combine(_, _))
-            }.headOption
-          }
-      }
-    }
+    postgres.use: session =>
+      session
+        .prepare(selectByOrderNo)
+        .flatMap: ps =>
+          ps.stream(no, 1024)
+            .compile
+            .toList
+            .map(_.groupBy(_.no))
+            .map:
+              _.map:
+                case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
+              .headOption
 
   override def queryByOrderDate(date: LocalDate): Task[List[Order]] =
-    postgres.use { session =>
+    postgres.use: session =>
       session
         .prepare(selectByOrderDate)
         .flatMap(ps =>
@@ -84,13 +82,11 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
             .compile
             .toList
             .map(_.groupBy(_.no))
-            .map { m =>
-              m.map { case (_, lis) =>
-                lis.reduce(Associative[Order].combine(_, _))
-              }.toList
-            }
+            .map: m =>
+              m.map:
+                case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
+              .toList
         )
-    }
 
   override def cleanAllOrders: Task[Unit] =
     postgres.use(session => session.execute(deleteAllLineItems).unit *> session.execute(deleteAllOrders).unit)

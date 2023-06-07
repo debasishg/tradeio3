@@ -15,11 +15,11 @@ object market:
    */
 
   enum Market(val entryName: String):
-    case NewYork extends Market("New York")
-    case Tokyo extends Market("Tokyo")
+    case NewYork   extends Market("New York")
+    case Tokyo     extends Market("Tokyo")
     case Singapore extends Market("Singapore")
-    case HongKong extends Market("Hong Kong")
-    case Other extends Market("Other")
+    case HongKong  extends Market("Hong Kong")
+    case Other     extends Market("Other")
 
   object Market:
 

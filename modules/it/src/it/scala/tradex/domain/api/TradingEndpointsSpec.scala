@@ -66,8 +66,7 @@ object TradingEndpointsSpec extends ZIOSpecDefault:
     ),
     suite("addEquityEndpoint")(
       test("should add equity")(
-        for
-          instrument <- TradingEndpointsTestSupport.callAddEquityEndpoint(
+        for instrument <- TradingEndpointsTestSupport.callAddEquityEndpoint(
             uri"http://test.com/api/instrument/equity",
             RepositoryTestSupport.addEquityData
           )

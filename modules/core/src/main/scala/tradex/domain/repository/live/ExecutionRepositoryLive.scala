@@ -2,16 +2,15 @@ package tradex.domain
 package repository
 package live
 
-import zio.Task
+import zio.{ Task, ZLayer }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
 import model.execution.*
 import zio.interop.catz.*
-import codecs.{ given, * }
+import codecs.{ *, given }
 import zio.prelude.NonEmptyList
-import zio.ZLayer
 import java.time.LocalDate
 
 final case class ExecutionRepositoryLive(postgres: Resource[Task, Session[Task]]) extends ExecutionRepository:
@@ -74,15 +73,13 @@ private[domain] object ExecutionRepositorySQL:
       VALUES $executionEncoder
     """.command
 
-  def insertExecutions(ps: List[Execution]): Command[ps.type] = {
+  def insertExecutions(ps: List[Execution]): Command[ps.type] =
     val enc = executionEncoder.values.list(ps)
     sql"INSERT INTO executions VALUES $enc".command
-  }
 
-  def insertExecutions(n: Int): Command[List[Execution]] = {
+  def insertExecutions(n: Int): Command[List[Execution]] =
     val enc = executionEncoder.list(n)
     sql"INSERT INTO executions VALUES $enc".command
-  }
 
   val selectByExecutionDate: Query[LocalDate, Execution] =
     sql"""

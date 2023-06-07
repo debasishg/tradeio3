@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.time.{ Instant, LocalDate, ZoneOffset }
 import csv.CSV
 import model.frontOfficeOrder.FrontOfficeOrder
-import transport.frontOfficeOrderT.{ given, * }
+import transport.frontOfficeOrderT.{ *, given }
 import service.live.FrontOfficeOrderParsingServiceLive
 import generators.frontOfficeOrderGen
 import repository.live.OrderRepositoryLive

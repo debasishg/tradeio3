@@ -9,7 +9,7 @@ import skunk.codec.all.*
 import skunk.implicits.*
 
 import model.account.*
-import codecs.{ given, * }
+import codecs.{ *, given }
 import zio.{ Task, ZLayer }
 import zio.stream.ZStream
 import zio.interop.catz.*
@@ -35,23 +35,22 @@ private object InstrumentRepositorySQL:
     (
       isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize ~ unitPrice.opt ~ money.opt ~ couponFrequency.opt
     ).values
-      .contramap {
+      .contramap:
         case Ccy(InstrumentBase(isin, name, ls)) =>
           isin ~ name ~ InstrumentType.CCY ~ None ~ None ~ ls ~ None ~ None ~ None
         case Equity(InstrumentBase(isin, name, ls), di, up) =>
           isin ~ name ~ InstrumentType.Equity ~ Some(di) ~ None ~ ls ~ Some(up) ~ None ~ None
         case FixedIncome(InstrumentBase(isin, name, ls), di, dm, cr, cf) =>
           isin ~ name ~ InstrumentType.FixedIncome ~ Some(di) ~ dm ~ ls ~ None ~ Some(cr) ~ Some(cf)
-      }
 
   val decoder: Decoder[Instrument] =
     (isinCode ~ instrumentName ~ instrumentType ~ timestamp.opt ~ timestamp.opt ~ lotSize ~ unitPrice.opt ~ money.opt ~ couponFrequency.opt)
-      .map { case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
-        tp match
-          case InstrumentType.CCY         => Ccy(InstrumentBase(isin, nm, ls))
-          case InstrumentType.Equity      => Equity(InstrumentBase(isin, nm, ls), di.get, up.get)
-          case InstrumentType.FixedIncome => FixedIncome(InstrumentBase(isin, nm, ls), di.get, dm, cr.get, cf.get)
-      }
+      .map:
+        case isin ~ nm ~ tp ~ di ~ dm ~ ls ~ up ~ cr ~ cf =>
+          tp match
+            case InstrumentType.CCY         => Ccy(InstrumentBase(isin, nm, ls))
+            case InstrumentType.Equity      => Equity(InstrumentBase(isin, nm, ls), di.get, up.get)
+            case InstrumentType.FixedIncome => FixedIncome(InstrumentBase(isin, nm, ls), di.get, dm, cr.get, cf.get)
 
   val selectByISINCode: Query[ISINCode, Instrument] =
     sql"""

@@ -3,7 +3,7 @@ package api
 
 import zio.json.*
 import model.instrument.*
-import transport.instrumentT.{ given, * }
+import transport.instrumentT.{ *, given }
 import sttp.tapir.Schema
 
 final case class InstrumentResponse(

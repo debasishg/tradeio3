@@ -17,8 +17,8 @@ import model.trade.*
 import model.market.Market
 import model.user.UserId
 import squants.market.USD
-import transport.instrumentT.{ given, * }
-import transport.tradeT.{ given, * }
+import transport.instrumentT.{ *, given }
+import transport.tradeT.{ *, given }
 import java.time.{ LocalDate, LocalDateTime }
 
 final case class TradingEndpoints(

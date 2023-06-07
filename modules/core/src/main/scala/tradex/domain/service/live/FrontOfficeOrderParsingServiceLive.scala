@@ -9,7 +9,7 @@ import zio.{ Clock, NonEmptyChunk, Task, UIO, ZIO }
 import kantan.csv.rfc
 import csv.CSV
 import model.frontOfficeOrder.FrontOfficeOrder
-import transport.frontOfficeOrderT.{ given, * }
+import transport.frontOfficeOrderT.{ *, given }
 import zio.stream.{ ZPipeline, ZStream }
 import model.order.*
 import model.account.*
