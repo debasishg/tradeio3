@@ -30,7 +30,7 @@ final case class ExchangeExecutionParsingServiceLive(
     ZPipeline
       .mapZIO(toExecution(_))
 
-  private def toExecution(exchangeExecution: ExchangeExecution): UIO[Execution] = Random.nextUUID.map { uuid =>
+  private def toExecution(exchangeExecution: ExchangeExecution): UIO[Execution] = Random.nextUUID.map: uuid =>
     Execution(
       ExecutionRefNo(uuid),
       exchangeExecution.accountNo,
@@ -43,7 +43,6 @@ final case class ExchangeExecutionParsingServiceLive(
       exchangeExecution.dateOfExecution,
       Some(exchangeExecution.exchangeExecutionRefNo)
     )
-  }
 
 object ExchangeExecutionParsingServiceLive:
   val layer = ZLayer.fromFunction(ExchangeExecutionParsingServiceLive.apply _)

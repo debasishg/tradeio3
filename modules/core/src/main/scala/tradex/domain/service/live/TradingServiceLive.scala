@@ -25,47 +25,48 @@ final case class TradingServiceLive(
 ) extends TradingService:
 
   override def generateTrades(date: LocalDate, userId: UserId): ZStream[Any, Throwable, Trade] =
-    ZStream.fromZIO(session.prepare(ExecutionRepositorySQL.selectByExecutionDate)).flatMap { pq =>
-      pq.stream(date, 512)
-        .toZStream()
-        .groupByKey(_.orderNo) { case (orderNo, executions) =>
-          executions
-            .via(executionsWithAccountNo)
-            .via(trades(userId))
-            .via(store)
-        }
-    }
+    ZStream
+      .fromZIO(session.prepare(ExecutionRepositorySQL.selectByExecutionDate))
+      .flatMap: pq =>
+        pq.stream(date, 512)
+          .toZStream()
+          .groupByKey(_.orderNo):
+            case (orderNo, executions) =>
+              executions
+                .via(executionsWithAccountNo)
+                .via(trades(userId))
+                .via(store)
 
   override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
     tradeRepository.query(accountNo, date)
 
   private val executionsWithAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
     ZPipeline.mapChunksZIO((inputs: Chunk[Execution]) =>
-      ZIO.foreach(inputs) { case exe =>
-        orderRepository
-          .query(exe.orderNo)
-          .someOrFail(new Throwable(s"Order not found for order no ${exe.orderNo}"))
-          .map(order => (exe, order.accountNo))
-      }
+      ZIO.foreach(inputs):
+        case exe =>
+          orderRepository
+            .query(exe.orderNo)
+            .someOrFail(new Throwable(s"Order not found for order no ${exe.orderNo}"))
+            .map(order => (exe, order.accountNo))
     )
 
   private def trades(userId: UserId): ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] =
     ZPipeline.mapChunksZIO((inputs: Chunk[(Execution, AccountNo)]) =>
-      ZIO.foreach(inputs) { case (exe, accountNo) =>
-        Trade
-          .trade(
-            accountNo,
-            exe.isin,
-            exe.market,
-            exe.buySell,
-            exe.unitPrice,
-            exe.quantity,
-            exe.dateOfExecution,
-            valueDate = None,
-            userId = Some(userId)
-          )
-          .map(Trade.withTaxFee)
-      }
+      ZIO.foreach(inputs):
+        case (exe, accountNo) =>
+          Trade
+            .trade(
+              accountNo,
+              exe.isin,
+              exe.market,
+              exe.buySell,
+              exe.unitPrice,
+              exe.quantity,
+              exe.dateOfExecution,
+              valueDate = None,
+              userId = Some(userId)
+            )
+            .map(Trade.withTaxFee)
     )
 
   private def store: ZPipeline[Any, Throwable, Trade, Trade] =

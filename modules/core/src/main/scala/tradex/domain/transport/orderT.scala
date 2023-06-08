@@ -7,8 +7,7 @@ import model.order.*
 import model.market.*
 import instrumentT.{ *, given }
 import accountT.{ *, given }
-import sttp.tapir.Schema
-import sttp.tapir.SchemaType
+import sttp.tapir.{ Schema, SchemaType }
 
 object orderT {
   given JsonDecoder[OrderNo] =

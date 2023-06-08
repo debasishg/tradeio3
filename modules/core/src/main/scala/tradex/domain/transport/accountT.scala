@@ -10,15 +10,18 @@ import sttp.tapir.Schema
 object accountT {
   given JsonDecoder[AccountNo] =
     JsonDecoder[String].mapOrFail(AccountNo.make(_).toEither.leftMap(_.head))
+
   given JsonEncoder[AccountNo] = JsonEncoder[String].contramap(AccountNo.unwrap(_))
 
   given JsonDecoder[AccountName] =
     JsonDecoder[String].mapOrFail(AccountName.make(_).toEither.leftMap(_.head))
+
   given JsonEncoder[AccountName] = JsonEncoder[String].contramap(AccountName.unwrap(_))
 
   given JsonCodec[AccountBase] = DeriveJsonCodec.gen[AccountBase]
+
   given JsonDecoder[TradingAccount] =
-    JsonDecoder[(AccountBase, String, Currency)].mapOrFail {
+    JsonDecoder[(AccountBase, String, Currency)].mapOrFail:
       case (base, accountType, ccy) if accountType == "Trading" =>
         TradingAccount
           .tradingAccount(
@@ -33,7 +36,7 @@ object accountT {
           .leftMap(_.head)
       case (base, accountType, ccy) =>
         s"Invalid account type: $accountType".invalid[TradingAccount].toEither
-    }
+
   given JsonEncoder[TradingAccount] =
     JsonEncoder[(AccountBase, String, Currency)].contramap { account =>
       (account.base, "Trading", account.tradingCurrency)
@@ -56,13 +59,13 @@ object accountT {
       case (base, accountType, ccy) =>
         s"Invalid account type: $accountType".invalid[SettlementAccount].toEither
     }
+
   given JsonEncoder[SettlementAccount] =
-    JsonEncoder[(AccountBase, String, Currency)].contramap { account =>
+    JsonEncoder[(AccountBase, String, Currency)].contramap: account =>
       (account.base, "Settlement", account.settlementCurrency)
-    }
 
   given JsonDecoder[TradingAndSettlementAccount] =
-    JsonDecoder[(AccountBase, String, Currency, Currency)].mapOrFail {
+    JsonDecoder[(AccountBase, String, Currency, Currency)].mapOrFail:
       case (base, accountType, tCcy, sCcy) if accountType == "Trading & Settlement" =>
         TradingAndSettlementAccount
           .tradingAndSettlementAccount(
@@ -78,11 +81,10 @@ object accountT {
           .leftMap(_.head)
       case (base, accountType, tCcy, sCcy) =>
         s"Invalid account type: $accountType".invalid[TradingAndSettlementAccount].toEither
-    }
+
   given JsonEncoder[TradingAndSettlementAccount] =
-    JsonEncoder[(AccountBase, String, Currency, Currency)].contramap { account =>
+    JsonEncoder[(AccountBase, String, Currency, Currency)].contramap: account =>
       (account.base, "Trading & Settlement", account.tradingCurrency, account.settlementCurrency)
-    }
 
   // union types don't work with zio-json
   // given JsonCodec[ClientAccount] = DeriveJsonCodec.gen[ClientAccount]

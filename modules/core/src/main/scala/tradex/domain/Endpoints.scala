@@ -8,11 +8,10 @@ import sttp.tapir.swagger.bundle.SwaggerInterpreter
 final case class Endpoints(
     tradingServerEndpoints: TradingServerEndpoints
 ):
-  val endpoints: List[ZServerEndpoint[Any, Any]] = {
+  val endpoints: List[ZServerEndpoint[Any, Any]] =
     val api  = tradingServerEndpoints.endpoints
     val docs = docsEndpoints(api)
     api ++ docs
-  }
 
   private def docsEndpoints(apiEndpoints: List[ZServerEndpoint[Any, Any]]): List[ZServerEndpoint[Any, Any]] =
     SwaggerInterpreter()

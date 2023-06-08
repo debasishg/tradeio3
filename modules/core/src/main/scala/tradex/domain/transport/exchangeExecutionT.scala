@@ -1,18 +1,15 @@
 package tradex.domain
 package transport
 
-import kantan.csv.RowDecoder
+import kantan.csv.{ HeaderCodec, RowDecoder }
 import kantan.csv.java8.*
 import model.exchangeExecution.*
 import cellCodecs.{ *, given }
-import kantan.csv.HeaderCodec
 import model.account.AccountNo
-import model.order.OrderNo
+import model.order.{ BuySell, OrderNo, Quantity }
 import model.instrument.ISINCode
 import model.market.Market
-import model.order.BuySell
 import model.instrument.UnitPrice
-import model.order.Quantity
 import java.time.LocalDateTime
 
 object exchangeExecutionT:

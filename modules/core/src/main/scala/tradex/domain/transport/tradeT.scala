@@ -12,7 +12,7 @@ import instrumentT.{ *, given }
 import orderT.{ *, given }
 import userT.{ *, given }
 
-object tradeT {
+object tradeT:
   given JsonDecoder[TradeRefNo] =
     JsonDecoder[UUID].mapOrFail(TradeRefNo.make(_).toEither.leftMap(_.head))
   given JsonEncoder[TradeRefNo] = JsonEncoder[UUID].contramap(TradeRefNo.unwrap(_))
@@ -24,4 +24,3 @@ object tradeT {
   given Schema[TradeRefNo]  = Schema.string
   given Schema[TradeTaxFee] = Schema.derived[TradeTaxFee]
   given Schema[Trade]       = Schema.derived[Trade]
-}

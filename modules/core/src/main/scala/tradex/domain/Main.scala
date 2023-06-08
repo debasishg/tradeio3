@@ -9,16 +9,13 @@ import sttp.tapir.server.ziohttp.ZioHttpServerOptions
 import api.common.{ CustomDecodeFailureHandler, DefectHandler }
 import sttp.tapir.server.ziohttp.ZioHttpInterpreter
 import api.endpoints.{ TradingEndpoints, TradingServerEndpoints }
-import service.live.InstrumentServiceLive
 import api.common.BaseEndpoints
-import repository.live.InstrumentRepositoryLive
 import tradex.domain.config.AppConfig
 import resources.AppResources
 import natchez.Trace.Implicits.noop
 import cats.effect.std.Console
-import tradex.domain.service.live.TradingServiceLive
-import tradex.domain.repository.live.OrderRepositoryLive
-import tradex.domain.repository.live.TradeRepositoryLive
+import service.live.{ InstrumentServiceLive, TradingServiceLive }
+import repository.live.{ InstrumentRepositoryLive, OrderRepositoryLive, TradeRepositoryLive }
 
 object Main extends ZIOAppDefault:
 

@@ -1,18 +1,15 @@
 package tradex.domain
 package transport
 
-import kantan.csv.CellDecoder
 import zio.prelude.{ BicovariantOps, Validation }
-import kantan.csv.{ DecodeError, RowDecoder }
+import kantan.csv.{ CellDecoder, CellEncoder, DecodeError, RowDecoder }
 import kantan.csv.java8.*
 import model.account.AccountNo
 import model.instrument.{ ISINCode, UnitPrice }
-import model.order.{ BuySell, Quantity }
-import tradex.domain.model.order.OrderNo
-import tradex.domain.model.market.Market
-import kantan.csv.CellEncoder
+import model.order.{ BuySell, OrderNo, Quantity }
+import model.market.Market
 
-object cellCodecs {
+object cellCodecs:
   given CellDecoder[AccountNo] = CellDecoder.from[AccountNo](v =>
     AccountNo(v).validateNo.toEitherAssociative.leftMap(err => DecodeError.TypeError(argOrEmpty("account no", v, err)))
   )
@@ -71,5 +68,3 @@ object cellCodecs {
 
   private def argOrEmpty(column: String, cell: String, error: String): String =
     if (cell.trim.isEmpty) s"Empty $column" else error
-
-}
