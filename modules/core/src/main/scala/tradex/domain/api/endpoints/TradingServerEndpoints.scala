@@ -18,9 +18,9 @@ final case class TradingServerEndpoints(
     tradingEndpoints: TradingEndpoints
 ):
   val getInstrumentEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.getInstrumentEndpoint
-    .serverLogic { isin =>
+    .serverLogic: isin =>
       makeISINCode(isin)
-        .flatMap { isinCode =>
+        .flatMap: isinCode =>
           instrumentService
             .query(isinCode)
             .logError
@@ -29,9 +29,7 @@ final case class TradingServerEndpoints(
             )
             .map(InstrumentResponse.apply)
             .either
-        }
         .catchAll(th => ZIO.fail(Exceptions.BadRequest(th.getMessage)))
-    }
 
   val addEquityEndpoint: ZServerEndpoint[Any, Any] = tradingEndpoints.addEquityEndpoint
     .serverLogic(data =>

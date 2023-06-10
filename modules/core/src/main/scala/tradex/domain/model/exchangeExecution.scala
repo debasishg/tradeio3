@@ -28,7 +28,7 @@ object exchangeExecution:
 
   object ExchangeExecution:
     def fromOrder(order: Order, market: Market, date: Instant): Task[NonEmptyList[ExchangeExecution]] =
-      Random.nextUUID.flatMap { uuid =>
+      Random.nextUUID.flatMap: uuid =>
         val executions = order.items.map { item =>
           ExchangeExecution(
             uuid.toString,
@@ -43,4 +43,3 @@ object exchangeExecution:
           )
         }
         ZIO.succeed(executions)
-      }

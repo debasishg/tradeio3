@@ -3,10 +3,10 @@ package model
 
 import zio.prelude.Validation
 import java.time.LocalDateTime
-import squants.market._
+import squants.market.*
 import account.*
 
-object balance {
+object balance:
   final case class Balance private[domain] (
       accountNo: AccountNo,
       amount: Money,
@@ -14,7 +14,7 @@ object balance {
       asOf: LocalDateTime
   )
 
-  object Balance {
+  object Balance:
     def balance(
         accountNo: AccountNo,
         amount: Money,
@@ -30,5 +30,3 @@ object balance {
       if (date.isAfter(today))
         Validation.fail(s"Balance date [$date] cannot be later than today")
       else Validation.succeed(date)
-  }
-}

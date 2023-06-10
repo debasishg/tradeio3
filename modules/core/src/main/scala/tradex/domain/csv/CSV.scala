@@ -12,11 +12,11 @@ import kantan.csv.HeaderEncoder
 
 object CSV:
   def encode[A: HeaderEncoder]: ZPipeline[Any, CharacterCodingException, A, Byte] =
-    ZPipeline.suspend {
+    ZPipeline.suspend(
       ZPipeline.mapChunks((in: Chunk[A]) => Chunk.single(in.asCsv(rfc.withHeader).trim)) >>>
         ZPipeline.intersperse("\r\n") >>>
         ZPipeline.utf8Encode
-    }
+    )
 
   def decode[A: RowDecoder](reader: Reader, conf: CsvConfiguration)(using
       ReaderEngine

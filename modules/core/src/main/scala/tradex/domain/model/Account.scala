@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 def today = LocalDateTime.now()
 
 object account:
-  final case class AccountBase(
+  final case class AccountBase private[model] (
       no: AccountNo,
       name: AccountName,
       dateOfOpen: LocalDateTime,
@@ -19,13 +19,13 @@ object account:
 
   sealed trait AccountType
 
-  trait Trading extends AccountType:
+  sealed trait Trading extends AccountType:
     def tradingCurrency: Currency
 
   sealed trait Settlement extends AccountType:
     def settlementCurrency: Currency
 
-  trait Account[C <: AccountType]:
+  private[model] trait Account[C <: AccountType]:
     private[account] def base: AccountBase
     def accountType: C
     def closeAccount(closeDate: LocalDateTime): Validation[String, Account[C]]
@@ -35,7 +35,7 @@ object account:
     val dateOfClose  = base.dateOfClose
     val baseCurrency = base.baseCurrency
 
-  final case class TradingAccount(
+  final case class TradingAccount private (
       private[domain] val base: AccountBase,
       accountType: Trading
   ) extends Account[Trading]:
@@ -117,13 +117,12 @@ object account:
         no.validateNo,
         name.validateName,
         validateOpenCloseDate(dateOfOpen.getOrElse(today), dateOfClose)
-      ) { (n, nm, d) =>
+      ): (n, nm, d) =>
         SettlementAccount(
           base = AccountBase(no, name, d._1, d._2, baseCurrency),
           accountType = new Settlement:
             def settlementCurrency = settlementCcy
         )
-      }
 
   object TradingAndSettlementAccount:
     abstract case class Both() extends Trading, Settlement
@@ -141,24 +140,23 @@ object account:
         no.validateNo,
         name.validateName,
         validateOpenCloseDate(dateOfOpen.getOrElse(today), dateOfClose)
-      ) { (n, nm, d) =>
+      ): (n, nm, d) =>
         TradingAndSettlementAccount(
           base = AccountBase(no, name, d._1, d._2, baseCurrency),
           accountType = new Both:
             def tradingCurrency    = tradingCcy
             def settlementCurrency = settlementCcy
         )
-      }
 
   private def validateOpenCloseDate(
       od: LocalDateTime,
       cd: Option[LocalDateTime]
   ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
-    cd.map { c =>
+    cd.map: c =>
       if (c isBefore od)
         Validation.fail(s"Close date [$c] cannot be earlier than open date [$od]")
       else Validation.succeed((od, cd))
-    }.getOrElse(Validation.succeed((od, cd)))
+    .getOrElse(Validation.succeed((od, cd)))
 
   private def validateAccountAlreadyClosed(
       a: AccountBase

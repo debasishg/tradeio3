@@ -59,7 +59,8 @@ object trade:
   ): List[TradeTaxFee] =
     taxFeeIds
       .zip(taxFeeIds.map(valueAs(trade, _)))
-      .map { case (tid, amt) => TradeTaxFee(tid, amt) }
+      .map:
+        case (tid, amt) => TradeTaxFee(tid, amt)
 
   private def netAmount(
       trade: Trade,
@@ -119,10 +120,10 @@ object trade:
         td: LocalDateTime,
         vd: Option[LocalDateTime]
     ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
-      vd.map { v =>
+      vd.map: v =>
         if (v.isBefore(td)) Validation.fail(s"Value date $v cannot be earlier than trade date $td")
         else Validation.succeed((td, vd))
-      }.getOrElse(Validation.succeed((td, vd)))
+      .getOrElse(Validation.succeed((td, vd)))
 
     def withTaxFee(trade: Trade): Trade =
       if (trade.taxFees.isEmpty && !trade.netAmount.isDefined)

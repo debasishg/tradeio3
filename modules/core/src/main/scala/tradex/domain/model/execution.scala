@@ -36,9 +36,9 @@ object execution:
 
   object Execution:
     def fromOrder(order: Order, market: Market): Task[NonEmptyList[Execution]] =
-      Clock.instant.flatMap { now =>
-        Random.nextUUID.flatMap { uuid =>
-          val executions = order.items.map { item =>
+      Clock.instant.flatMap: now =>
+        Random.nextUUID.flatMap: uuid =>
+          val executions = order.items.map: item =>
             Execution(
               ExecutionRefNo(uuid),
               order.accountNo,
@@ -50,7 +50,4 @@ object execution:
               item.quantity,
               LocalDateTime.ofInstant(now, ZoneOffset.UTC)
             )
-          }
           ZIO.succeed(executions)
-        }
-      }

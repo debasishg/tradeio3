@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import squants.market.Money
 import java.time.LocalDateTime
 
-object instrument {
+object instrument:
   object ISINCode extends Newtype[String]:
     override inline def assertion: Assertion[String] = hasLength(equalTo(12)) &&
       matches("([A-Z]{2})((?![A-Z]{10}\b)[A-Z0-9]{10})")
@@ -93,7 +93,7 @@ object instrument {
         couponRate: Money,
         couponFrequency: CouponFrequency
     ): Validation[String, FixedIncome] =
-      validateIssueAndMaturityDate(issueDate, maturityDate).map { (id, md) =>
+      validateIssueAndMaturityDate(issueDate, maturityDate).map: (id, md) =>
         FixedIncome(
           base = InstrumentBase(isin, name, lotSize),
           dateOfIssue = id,
@@ -101,16 +101,13 @@ object instrument {
           couponRate = couponRate,
           couponFrequency = couponFrequency
         )
-      }
 
     private def validateIssueAndMaturityDate(
         id: LocalDateTime,
         md: Option[LocalDateTime]
     ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
-      md.map { c =>
+      md.map: c =>
         if (c isBefore id)
           Validation.fail(s"Maturity date [$c] cannot be earlier than issue date [$id]")
         else Validation.succeed((id, md))
-      }.getOrElse(Validation.succeed((id, md)))
-
-}
+      .getOrElse(Validation.succeed((id, md)))
