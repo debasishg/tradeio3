@@ -1,7 +1,7 @@
 package tradex.domain
 package repository
 
-import zio.{ Chunk, Task }
+import zio.{ Chunk, Task, UIO }
 import model.account.*
 import model.trade.*
 import model.market.*
@@ -11,16 +11,16 @@ import zio.prelude.NonEmptyList
 trait TradeRepository:
 
   /** query by account number and trade date (compares using the date part only) */
-  def query(accountNo: AccountNo, date: LocalDate): Task[List[Trade]]
+  def query(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]]
 
   /** query by market */
-  def queryByMarket(market: Market): Task[List[Trade]]
+  def queryByMarket(market: Market): UIO[List[Trade]]
 
   /** query all trades */
-  def all: Task[List[Trade]]
+  def all: UIO[List[Trade]]
 
   /** store */
-  def store(trd: Trade): Task[Trade]
+  def store(trd: Trade): UIO[Trade]
 
   /** store many trades */
-  def store(trades: Chunk[Trade]): Task[Unit]
+  def store(trades: Chunk[Trade]): UIO[Unit]

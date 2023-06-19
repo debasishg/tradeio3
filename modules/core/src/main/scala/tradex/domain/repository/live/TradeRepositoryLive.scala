@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package live
 
-import zio.{ Task, ZIO }
+import zio.{ Task, UIO, ZIO }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -30,29 +30,35 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
       def combine(x: => Trade, y: => Trade): Trade =
         x.copy(taxFees = x.taxFees ++ y.taxFees)
 
-  override def store(trades: Chunk[Trade]): Task[Unit] =
-    postgres.use: session =>
-      ZIO
-        .foreach(trades.toList)(trade => storeTradeAndTaxFees(trade, session))
-        .unit
+  override def store(trades: Chunk[Trade]): UIO[Unit] =
+    postgres
+      .use: session =>
+        ZIO
+          .foreach(trades.toList)(trade => storeTradeAndTaxFees(trade, session))
+          .unit
+      .orDie
 
-  override def all: Task[List[Trade]] =
-    postgres.use: session =>
-      session
-        .prepare(selectAll)
-        .flatMap: ps =>
-          ps.stream(skunk.Void, 1024)
-            .compile
-            .toList
-            .map(_.groupBy(_.tradeRefNo))
-            .map:
-              _.map:
-                case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+  override def all: UIO[List[Trade]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectAll)
+          .flatMap: ps =>
+            ps.stream(skunk.Void, 1024)
+              .compile
               .toList
+              .map(_.groupBy(_.tradeRefNo))
+              .map:
+                _.map:
+                  case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+                .toList
+      .orDie
 
-  override def store(trd: Trade): Task[Trade] =
-    postgres.use: session =>
-      storeTradeAndTaxFees(trd, session)
+  override def store(trd: Trade): UIO[Trade] =
+    postgres
+      .use: session =>
+        storeTradeAndTaxFees(trd, session)
+      .orDie
 
   private def storeTradeAndTaxFees(
       t: Trade,
@@ -72,12 +78,27 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
           yield ()
     .map(_ => t)
 
-  override def query(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByAccountNoAndDate)
-        .flatMap: ps =>
-          ps.stream(accountNo ~ date, 1024)
+  override def query(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByAccountNoAndDate)
+          .flatMap: ps =>
+            ps.stream(accountNo ~ date, 1024)
+              .compile
+              .toList
+              .map(_.groupBy(_.tradeRefNo))
+              .map:
+                _.map:
+                  case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
+                .toList
+      .orDie
+
+  override def queryByMarket(market: Market): UIO[List[Trade]] =
+    postgres
+      .use: session =>
+        session.prepare(selectByMarket).flatMap { ps =>
+          ps.stream(market, 1024)
             .compile
             .toList
             .map(_.groupBy(_.tradeRefNo))
@@ -85,19 +106,8 @@ final case class TradeRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
               _.map:
                 case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
               .toList
-
-  override def queryByMarket(market: Market): Task[List[Trade]] =
-    postgres.use: session =>
-      session.prepare(selectByMarket).flatMap { ps =>
-        ps.stream(market, 1024)
-          .compile
-          .toList
-          .map(_.groupBy(_.tradeRefNo))
-          .map:
-            _.map:
-              case (_, trades) => trades.reduce(Associative[Trade].combine(_, _))
-            .toList
-      }
+        }
+      .orDie
 
 private[domain] object TradeRepositorySQL:
   val tradeTaxFeeDecoder: Decoder[Trade] =

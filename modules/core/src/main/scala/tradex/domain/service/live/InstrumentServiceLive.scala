@@ -2,7 +2,7 @@ package tradex.domain
 package service
 package live
 
-import zio.{ Task, ZIO, ZLayer }
+import zio.{ Task, UIO, ZIO, ZLayer }
 import repository.InstrumentRepository
 import model.instrument.*
 import java.time.LocalDateTime
@@ -21,7 +21,7 @@ final case class InstrumentServiceLive(
       lotSize: LotSize,
       issueDate: LocalDateTime,
       unitPrice: UnitPrice
-  ): Task[Instrument] =
+  ): UIO[Instrument] =
     repository.store(Equity.equity(isin, name, lotSize, issueDate, unitPrice))
 
   override def addFixedIncome(

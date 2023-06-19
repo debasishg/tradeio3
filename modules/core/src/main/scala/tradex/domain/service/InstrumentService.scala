@@ -1,7 +1,7 @@
 package tradex.domain
 package service
 
-import zio.Task
+import zio.{ Task, UIO }
 import model.instrument.*
 import java.time.LocalDateTime
 import squants.market.Money
@@ -15,7 +15,7 @@ trait InstrumentService:
       lotSize: LotSize,
       issueDate: LocalDateTime,
       unitPrice: UnitPrice
-  ): Task[Instrument]
+  ): UIO[Instrument]
 
   def addFixedIncome(
       isin: ISINCode,

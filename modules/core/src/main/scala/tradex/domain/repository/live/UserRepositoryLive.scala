@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package live
 
-import zio.{ Random, Task }
+import zio.{ Random, Task, UIO }
 import cats.effect.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -14,22 +14,26 @@ import zio.interop.catz.*
 final case class UserRepositoryLive(postgres: Resource[Task, Session[Task]]) extends UserRepository:
   import UserRepositorySQL.*
 
-  override def query(userName: UserName): Task[Option[User]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByUserName)
-        .flatMap: ps =>
-          ps.option(userName)
+  override def query(userName: UserName): UIO[Option[User]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByUserName)
+          .flatMap: ps =>
+            ps.option(userName)
+      .orDie
 
-  override def store(userName: UserName, password: EncryptedPassword): Task[UserId] =
-    postgres.use: session =>
-      session
-        .prepare(upsertUser)
-        .flatMap: cmd =>
-          Random.nextUUID.flatMap: id =>
-            cmd
-              .execute(User(UserId(id), userName, password))
-              .as(UserId(id))
+  override def store(userName: UserName, password: EncryptedPassword): UIO[UserId] =
+    postgres
+      .use: session =>
+        session
+          .prepare(upsertUser)
+          .flatMap: cmd =>
+            Random.nextUUID.flatMap: id =>
+              cmd
+                .execute(User(UserId(id), userName, password))
+                .as(UserId(id))
+      .orDie
 
 private[domain] object UserRepositorySQL:
   val decoder: Decoder[User] =

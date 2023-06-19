@@ -1,8 +1,8 @@
 package tradex.domain
 package service
 
-import zio.Task
+import zio.UIO
 import model.account.*
 
 trait AccountService:
-  def query(accountNo: AccountNo): Task[Option[ClientAccount]]
+  def query(accountNo: AccountNo): UIO[Option[ClientAccount]]

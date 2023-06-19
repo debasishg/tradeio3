@@ -7,7 +7,7 @@ import java.time.LocalDate
 import model.account.*
 import model.order.*
 import zio.prelude.NonEmptyList
-import zio.{ Task, ZIO, ZLayer }
+import zio.{ Task, UIO, ZIO, ZLayer }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -29,13 +29,15 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
           items = x.items ++ y.items
         )
 
-  override def store(orders: NonEmptyList[Order]): Task[Unit] =
-    postgres.use(session =>
-      session.transaction.use(_ => ZIO.foreach(orders.toList)(storeOrderAndLineItems(_, session)).map(_ => ()))
-    )
+  override def store(orders: NonEmptyList[Order]): UIO[Unit] =
+    postgres
+      .use(session =>
+        session.transaction.use(_ => ZIO.foreach(orders.toList)(storeOrderAndLineItems(_, session)).map(_ => ()))
+      )
+      .orDie
 
-  override def store(ord: Order): Task[Order] =
-    postgres.use(session => session.transaction.use(_ => storeOrderAndLineItems(ord, session)))
+  override def store(ord: Order): UIO[Order] =
+    postgres.use(session => session.transaction.use(_ => storeOrderAndLineItems(ord, session))).orDie
 
   private def storeOrderAndLineItems(
       ord: Order,
@@ -59,37 +61,41 @@ final case class OrderRepositoryLive(postgres: Resource[Task, Session[Task]]) ex
         .unit
         .map(_ => ord)
 
-  override def query(no: OrderNo): Task[Option[Order]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByOrderNo)
-        .flatMap: ps =>
-          ps.stream(no, 1024)
-            .compile
-            .toList
-            .map(_.groupBy(_.no))
-            .map:
-              _.map:
-                case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
-              .headOption
-
-  override def queryByOrderDate(date: LocalDate): Task[List[Order]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByOrderDate)
-        .flatMap(ps =>
-          ps.stream(date, 1024)
-            .compile
-            .toList
-            .map(_.groupBy(_.no))
-            .map: m =>
-              m.map:
-                case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
+  override def query(no: OrderNo): UIO[Option[Order]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByOrderNo)
+          .flatMap: ps =>
+            ps.stream(no, 1024)
+              .compile
               .toList
-        )
+              .map(_.groupBy(_.no))
+              .map:
+                _.map:
+                  case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
+                .headOption
+      .orDie
 
-  override def cleanAllOrders: Task[Unit] =
-    postgres.use(session => session.execute(deleteAllLineItems).unit *> session.execute(deleteAllOrders).unit)
+  override def queryByOrderDate(date: LocalDate): UIO[List[Order]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByOrderDate)
+          .flatMap(ps =>
+            ps.stream(date, 1024)
+              .compile
+              .toList
+              .map(_.groupBy(_.no))
+              .map: m =>
+                m.map:
+                  case (_, lis) => lis.reduce(Associative[Order].combine(_, _))
+                .toList
+          )
+      .orDie
+
+  override def cleanAllOrders: UIO[Unit] =
+    postgres.use(session => session.execute(deleteAllLineItems).unit *> session.execute(deleteAllOrders).unit).orDie
 
 private object OrderRepositorySQL:
 

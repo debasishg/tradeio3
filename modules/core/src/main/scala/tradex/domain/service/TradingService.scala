@@ -5,7 +5,7 @@ import java.time.LocalDate
 import model.trade.*
 import model.user.*
 import model.account.AccountNo
-import zio.Task
+import zio.{ Task, UIO }
 import zio.stream.ZStream
 
 trait TradingService:
@@ -14,4 +14,4 @@ trait TradingService:
       userId: UserId
   ): ZStream[Any, Throwable, Trade]
 
-  def queryTradesForDate(accountNo: AccountNo, date: LocalDate): Task[List[Trade]]
+  def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]]

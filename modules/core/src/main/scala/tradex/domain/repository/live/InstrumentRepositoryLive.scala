@@ -10,7 +10,7 @@ import skunk.implicits.*
 
 import model.account.*
 import codecs.{ *, given }
-import zio.{ Task, ZLayer }
+import zio.{ Task, UIO, ZLayer }
 import zio.stream.ZStream
 import zio.interop.catz.*
 import model.instrument.*
@@ -18,16 +18,18 @@ import model.instrument.*
 final case class InstrumentRepositoryLive(postgres: Resource[Task, Session[Task]]) extends InstrumentRepository:
   import InstrumentRepositorySQL._
 
-  override def queryByInstrumentType(instrumentType: InstrumentType): Task[List[Instrument]] =
-    postgres.use(session =>
-      session.prepare(selectByInstrumentType).flatMap(ps => ps.stream(instrumentType, 1024).compile.toList)
-    )
+  override def queryByInstrumentType(instrumentType: InstrumentType): UIO[List[Instrument]] =
+    postgres
+      .use(session =>
+        session.prepare(selectByInstrumentType).flatMap(ps => ps.stream(instrumentType, 1024).compile.toList)
+      )
+      .orDie
 
-  override def query(isin: ISINCode): Task[Option[Instrument]] =
-    postgres.use(session => session.prepare(selectByISINCode).flatMap(ps => ps.option(isin)))
+  override def query(isin: ISINCode): UIO[Option[Instrument]] =
+    postgres.use(session => session.prepare(selectByISINCode).flatMap(ps => ps.option(isin))).orDie
 
-  override def store(ins: Instrument): Task[Instrument] =
-    postgres.use(session => session.prepare(upsertInstrument).flatMap(_.execute(ins).void.map(_ => ins)))
+  override def store(ins: Instrument): UIO[Instrument] =
+    postgres.use(session => session.prepare(upsertInstrument).flatMap(_.execute(ins).void.map(_ => ins))).orDie
 
 private object InstrumentRepositorySQL:
 

@@ -3,7 +3,7 @@ package service
 package live
 
 import java.time.LocalDate
-import zio.{ Chunk, Task, ZIO, ZLayer }
+import zio.{ Chunk, Task, UIO, ZIO, ZLayer }
 import zio.stream.{ ZPipeline, ZStream }
 import zio.interop.catz.*
 import zio.stream.interop.fs2z.*
@@ -37,7 +37,7 @@ final case class TradingServiceLive(
                 .via(trades(userId))
                 .via(store)
 
-  override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
+  override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]] =
     tradeRepository.query(accountNo, date)
 
   private val executionsWithAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =

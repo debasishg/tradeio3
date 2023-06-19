@@ -2,7 +2,7 @@ package tradex.domain
 package repository
 package live
 
-import zio.{ Task, ZLayer }
+import zio.{ Task, UIO, ZLayer }
 import cats.effect.kernel.Resource
 import skunk.*
 import skunk.codec.all.*
@@ -17,28 +17,34 @@ import zio.interop.catz.*
 final case class BalanceRepositoryLive(postgres: Resource[Task, Session[Task]]) extends BalanceRepository:
   import BalanceRepositorySQL.*
 
-  override def store(b: Balance): Task[Balance] =
-    postgres.use: session =>
-      session
-        .prepare(upsertBalance)
-        .flatMap: cmd =>
-          cmd.execute(b).unit.map(_ => b)
+  override def store(b: Balance): UIO[Balance] =
+    postgres
+      .use: session =>
+        session
+          .prepare(upsertBalance)
+          .flatMap: cmd =>
+            cmd.execute(b).unit.map(_ => b)
+      .orDie
 
-  override def all: Task[List[Balance]] = postgres.use(_.execute(selectAll))
+  override def all: UIO[List[Balance]] = postgres.use(_.execute(selectAll)).orDie
 
-  override def query(date: LocalDate): Task[List[Balance]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByDate)
-        .flatMap: ps =>
-          ps.stream(date, 1024).compile.toList
+  override def query(date: LocalDate): UIO[List[Balance]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByDate)
+          .flatMap: ps =>
+            ps.stream(date, 1024).compile.toList
+      .orDie
 
-  override def query(no: AccountNo): Task[Option[Balance]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByAccountNo)
-        .flatMap: ps =>
-          ps.option(no)
+  override def query(no: AccountNo): UIO[Option[Balance]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByAccountNo)
+          .flatMap: ps =>
+            ps.option(no)
+      .orDie
 
 private[domain] object BalanceRepositorySQL:
   val decoder: Decoder[Balance] =

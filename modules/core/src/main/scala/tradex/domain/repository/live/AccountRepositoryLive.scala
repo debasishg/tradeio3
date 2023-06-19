@@ -11,7 +11,7 @@ import skunk.implicits.*
 
 import model.account.*
 import codecs.{ *, given }
-import zio.{ Chunk, Task, ZIO, ZLayer }
+import zio.{ Chunk, Task, UIO, ZIO, ZLayer }
 import zio.stream.ZStream
 import zio.interop.catz.*
 import zio.stream.interop.fs2z.*
@@ -19,36 +19,45 @@ import zio.stream.interop.fs2z.*
 final case class AccountRepositoryLive(postgres: Resource[Task, Session[Task]]) extends AccountRepository:
   import AccountRepositorySQL._
 
-  def query(no: AccountNo): Task[Option[ClientAccount]] =
-    postgres.use(session => session.prepare(selectByAccountNo).flatMap(ps => ps.option(no)))
+  def query(no: AccountNo): UIO[Option[ClientAccount]] =
+    postgres.use(session => session.prepare(selectByAccountNo).flatMap(ps => ps.option(no))).orDie
 
-  def store(a: ClientAccount, upsert: Boolean = true): Task[ClientAccount] =
-    postgres.use: session =>
-      session
-        .prepare(if (upsert) upsertAccount else insertAccount)
-        .flatMap: cmd =>
-          cmd.execute(a).void.map(_ => a)
+  def store(a: ClientAccount, upsert: Boolean = true): UIO[ClientAccount] =
+    postgres
+      .use: session =>
+        session
+          .prepare(if (upsert) upsertAccount else insertAccount)
+          .flatMap: cmd =>
+            cmd.execute(a).void.map(_ => a)
+      .orDie
 
-  def query(openedOn: LocalDate): Task[List[ClientAccount]] =
-    postgres.use: session =>
-      session
-        .prepare(selectByOpenedDate)
-        .flatMap: ps =>
-          ps.stream(openedOn, 1024).compile.toList
+  def query(openedOn: LocalDate): UIO[List[ClientAccount]] =
+    postgres
+      .use: session =>
+        session
+          .prepare(selectByOpenedDate)
+          .flatMap: ps =>
+            ps.stream(openedOn, 1024).compile.toList
+      .orDie
 
-  def all: Task[List[ClientAccount]] = postgres.use: session =>
-    session.execute(selectAll)
+  def all: UIO[List[ClientAccount]] =
+    postgres
+      .use: session =>
+        session.execute(selectAll)
+      .orDie
 
-  def allClosed(closeDate: Option[LocalDate]): Task[List[ClientAccount]] =
-    postgres.use: session =>
-      closeDate
-        .map: cd =>
-          session
-            .prepare(selectClosedAfter)
-            .flatMap: ps =>
-              ps.stream(cd, 1024).compile.toList
-        .getOrElse:
-          session.execute(selectAllClosed)
+  def allClosed(closeDate: Option[LocalDate]): UIO[List[ClientAccount]] =
+    postgres
+      .use: session =>
+        closeDate
+          .map: cd =>
+            session
+              .prepare(selectClosedAfter)
+              .flatMap: ps =>
+                ps.stream(cd, 1024).compile.toList
+          .getOrElse:
+            session.execute(selectAllClosed)
+      .orDie
 
 private[domain] object AccountRepositorySQL:
 
