@@ -1,7 +1,7 @@
 object Versions {
-  val catsVersion           = "2.6.1"
-  val catsEffectVersion     = "3.4.8"
-  val scalaVersion          = "3.2.2"
+  val catsVersion           = "2.9.0"
+  val catsEffectVersion     = "3.5.1"
+  val scalaVersion          = "3.3.0"
   val log4j2Version         = "2.13.1"
   val logbackVersion        = "1.2.6"
   val squantsVersion        = "1.8.3"
