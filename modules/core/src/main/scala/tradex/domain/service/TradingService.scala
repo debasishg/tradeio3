@@ -7,6 +7,7 @@ import model.user.*
 import model.account.AccountNo
 import zio.{ Task, UIO }
 import zio.stream.ZStream
+import tradex.domain.model.execution.Execution
 
 trait TradingService:
   def generateTrades(
@@ -15,3 +16,4 @@ trait TradingService:
   ): ZStream[Any, Throwable, Trade]
 
   def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]]
+  def queryExecutionsForDate(date: LocalDate): ZStream[Any, Throwable, Execution]

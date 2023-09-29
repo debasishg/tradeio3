@@ -25,21 +25,24 @@ final case class TradingServiceLive(
 ) extends TradingService:
 
   override def generateTrades(date: LocalDate, userId: UserId): ZStream[Any, Throwable, Trade] =
+    queryExecutionsForDate(date)
+      .groupByKey(_.orderNo):
+        case (orderNo, executions) =>
+          executions
+            .via(getAccountNo)
+            .via(allocateToClientAccount(userId))
+            .via(store)
+
+  override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]] =
+    tradeRepository.query(accountNo, date)
+
+  override def queryExecutionsForDate(date: LocalDate): ZStream[Any, Throwable, Execution] =
     ZStream
       .fromZIO(session.prepare(ExecutionRepositorySQL.selectByExecutionDate))
       .flatMap: preparedQuery =>
         preparedQuery
           .stream(date, 512)
           .toZStream()
-          .groupByKey(_.orderNo):
-            case (orderNo, executions) =>
-              executions
-                .via(getAccountNo)
-                .via(allocateToClientAccount(userId))
-                .via(store)
-
-  override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]] =
-    tradeRepository.query(accountNo, date)
 
   private val getAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
     ZPipeline.mapChunksZIO((inputs: Chunk[Execution]) =>

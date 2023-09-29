@@ -81,16 +81,6 @@ object TradeAppComponents:
     _ <- ZIO.logInfo(s"$trades")
   yield ()
 
-  private def reader(name: String): ZIO[Scope, IOException, Reader] =
-    ZStream
-      .fromResource(name)
-      .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
-      .toReader
-
-  private def withCSV(name: String): ZIO[Scope, IOException, Reader] =
-    ZIO
-      .acquireRelease(reader(name))(rdr => ZIO.succeedBlocking(rdr.close()))
-
   val parseFrontOfficeOrders: ZIO[FrontOfficeOrderParsingService, Throwable, Unit] =
     ZIO.scoped(
       withCSV("forders.csv")
@@ -102,3 +92,13 @@ object TradeAppComponents:
       withCSV("executions.csv")
         .flatMap(reader => ZIO.serviceWithZIO[ExchangeExecutionParsingService](_.parse(reader)))
     )
+
+  private def reader(name: String): ZIO[Scope, IOException, Reader] =
+    ZStream
+      .fromResource(name)
+      .via(ZPipeline.decodeCharsWith(StandardCharsets.UTF_8))
+      .toReader
+
+  private def withCSV(name: String): ZIO[Scope, IOException, Reader] =
+    ZIO
+      .acquireRelease(reader(name))(rdr => ZIO.succeedBlocking(rdr.close()))
