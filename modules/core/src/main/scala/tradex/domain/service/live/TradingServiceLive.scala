@@ -24,15 +24,6 @@ final case class TradingServiceLive(
     tradeRepository: TradeRepository
 ) extends TradingService:
 
-  override def generateTrades(date: LocalDate, userId: UserId): ZStream[Any, Throwable, Trade] =
-    queryExecutionsForDate(date)
-      .groupByKey(_.orderNo):
-        case (orderNo, executions) =>
-          executions
-            .via(getAccountNo)
-            .via(allocateToClientAccount(userId))
-            .via(store)
-
   override def queryTradesForDate(accountNo: AccountNo, date: LocalDate): UIO[List[Trade]] =
     tradeRepository.query(accountNo, date)
 
@@ -44,7 +35,7 @@ final case class TradingServiceLive(
           .stream(date, 512)
           .toZStream()
 
-  private val getAccountNo: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
+  override def getAccountNoFromExecution: ZPipeline[Any, Throwable, Execution, (Execution, AccountNo)] =
     ZPipeline.mapChunksZIO((inputs: Chunk[Execution]) =>
       ZIO.foreach(inputs):
         case exe =>
@@ -54,7 +45,7 @@ final case class TradingServiceLive(
             .map(order => (exe, order.accountNo))
     )
 
-  private def allocateToClientAccount(userId: UserId): ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] =
+  override def allocateTradeToClientAccount(userId: UserId): ZPipeline[Any, Throwable, (Execution, AccountNo), Trade] =
     ZPipeline.mapChunksZIO((inputs: Chunk[(Execution, AccountNo)]) =>
       ZIO.foreach(inputs):
         case (exe, accountNo) =>
@@ -73,7 +64,7 @@ final case class TradingServiceLive(
             .map(Trade.withTaxFee)
     )
 
-  private def store: ZPipeline[Any, Throwable, Trade, Trade] =
+  override def storeTrades: ZPipeline[Any, Throwable, Trade, Trade] =
     ZPipeline.mapChunksZIO((trades: Chunk[Trade]) => tradeRepository.store(trades).as(trades))
 
 object TradingServiceLive:
